@@ -1,4 +1,7 @@
 vendor
 .env
+composer
+composer.phar
+composer-setup.php
 
 

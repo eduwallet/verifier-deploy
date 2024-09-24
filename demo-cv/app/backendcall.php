@@ -4,17 +4,17 @@ include_once(__DIR__ . '/vendor/autoload.php');
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->safeLoad();
 
-$adminToken = $_SESSION['token'];
-$bearerToken = $_ENV['BEARER_TOKEN'];
-$serviceurl = $_ENV['SERVICE_URL'];
-$credential = $_POST['credential'];
+$adminToken = $_SESSION['token'] ?? '';
+$bearerToken = $_ENV['BEARER_TOKEN'] ?? '';
+$serviceurl = $_ENV['SERVICE_URL'] ?? '';
+$credential = $_POST['credential'] ?? '';
 $states = $_SESSION['states'] ?? [];
 $allowedcredentials = array_map(fn ($x) => trim($x), explode(',', $_ENV["CREDENTIAL_TYPES"] ?? 'ABC,PID'));
 
 error_log("token $adminToken, bearer $bearerToken");
 error_log(json_encode($_POST));
 
-if (!isset ($_POST['token']) || $_POST['token'] !== $adminToken) {
+if (!isset($_POST['token']) || $_POST['token'] !== $adminToken) {
     error_log("token mismatch " . $_POST['token'] . ' vs ' . $adminToken);
     http_response_code(403);
     die(403);
@@ -36,13 +36,13 @@ switch ($_POST['action']) {
             die(403);
         }
 
-        curl_setopt($ch, CURLOPT_URL, $serviceurl . $credential);
+        curl_setopt($ch, CURLOPT_URL, $serviceurl . '/' . $credential);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, [
             // empty data set for now
         ]);
         try {
-            error_log("calling curl_exec " . $serviceurl . $credential);
+            error_log("calling curl_exec " . $serviceurl . '/' . $credential);
             $response = json_decode(curl_exec($ch));
             error_log("output is " . json_encode($response));
         }
@@ -75,7 +75,7 @@ switch ($_POST['action']) {
         }
         $checkUri = $states[$state]->checkUri;
         curl_setopt($ch, CURLOPT_URL, $checkUri);
-        curl_setopt($ch, CURLOPT_GET, true);
+        curl_setopt($ch, CURLOPT_HTTPGET, true);
 
         $response = json_decode(curl_exec($ch));
         if (!is_object($response)) {
