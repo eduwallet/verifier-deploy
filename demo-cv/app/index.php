@@ -165,11 +165,11 @@ window.setInterval(function() {
         })
         .then((json) => {
             isWaiting = false;
-            if (json.status == 'AuthorizationRequestRetrieved') {
+            if (json.status == 'AUTHORIZATION_REQUEST_RETRIEVED') {
                 currentStage = 'stage3';
                 flipStage();
             }
-            else if(json.status == 'ResponseReceived') {
+            else if(json.status == 'RESPONSE_RECEIVED') {
                 currentStage = 'stage4';
                 response = json.result;
                 flipStage();
