@@ -66,6 +66,9 @@ $_SESSION['token'] = $adminToken;
 
                 <h4>Credential data</h4>
                 <div id='credentials'></div>
+
+                <h4>Validation Messages</h4>
+                <div id='messages'></div>
             </div>
         </div>
 
@@ -136,6 +139,17 @@ function flipStage() {
             }            
         }
         $('#credentials').html('<div class="credentials">' + txt + '</div>');
+
+        var msg='';
+        if (response.messages.length > 0) {
+            for (var message of response.messages) {
+                txt += '<div class="row"><div class="label messagelabel">' + message.code + '</div><div class="message">'+ message.message + '</div></div>';
+            }
+        }
+        else {
+            msg += '<div class="row"><div class="label messagelabel">OKAY</div><div class="message">No problems found while validating</div></div>';
+        }
+        $('#messages').html('<div class="messages">' + msg + '</div>');
     }
     else if (currentStage == 'stage3') {
         $('#stage3').show();

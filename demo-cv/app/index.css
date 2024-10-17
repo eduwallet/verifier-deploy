@@ -52,6 +52,10 @@ body .wrapper button {
     width: 280px;
 }
 
+.row .messagelabel {
+    width: 280px;
+}
+
 .row .metadata {
     flex: 1;
     overflow: hidden;
@@ -62,6 +66,10 @@ body .wrapper button {
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.row .message {
+    flex: 1;    
 }
 
 .row .portrait {
