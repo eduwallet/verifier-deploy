@@ -179,7 +179,7 @@ window.setInterval(function() {
         })
         .then((json) => {
             isWaiting = false;
-            if (json.status == 'AUTHORIZATION_REQUEST_RETRIEVED') {
+            if (json.status == 'AUTHORIZATION_REQUEST_RETRIEVED' || json.status == 'RESPONSE_PROCESSING') {
                 currentStage = 'stage3';
                 flipStage();
             }
