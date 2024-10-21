@@ -143,7 +143,7 @@ function flipStage() {
         var msg='';
         if (response.messages.length > 0) {
             for (var message of response.messages) {
-                txt += '<div class="row"><div class="label messagelabel">' + message.code + '</div><div class="message">'+ message.message + '</div></div>';
+                msg += '<div class="row"><div class="label messagelabel">' + message.code + '</div><div class="message">'+ message.message + '</div></div>';
             }
         }
         else {
