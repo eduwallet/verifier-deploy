@@ -123,22 +123,31 @@ function flipStage() {
         $('#issuer').html(response.issuer);
         $('#stateid').html(response.state);
         $('#nonce').html(response.nonce);
-        $('#holder').html(response.credentials[0].holder);
-        $('#originalissuer').html(response.credentials[0].issuer);
-        $('#issuerkey').html(response.credentials[0].issuerKey);
 
-        var txt='';
-        for(var i of Object.keys(response.credentials[0].claims)) {
-            var key = i;
-            var claim = response.credentials[0].claims[key];
-            if (typeof(claim) == 'string' && claim.startsWith('data:image/')) {
-                txt += '<div class="row"><div class="label claimlabel">' + key + '</div><div class="claim portraitclaim"><img src="' + claim + '" class="portrait"></div></div>';
+        if (response.credentials && response.credentials.length > 0) {
+            $('#holder').html(response.credentials[0].holder);
+            $('#originalissuer').html(response.credentials[0].issuer);
+            $('#issuerkey').html(response.credentials[0].issuerKey);
+
+            var txt='';
+            for(var i of Object.keys(response.credentials[0].claims)) {
+                var key = i;
+                var claim = response.credentials[0].claims[key];
+                if (typeof(claim) == 'string' && claim.startsWith('data:image/')) {
+                    txt += '<div class="row"><div class="label claimlabel">' + key + '</div><div class="claim portraitclaim"><img src="' + claim + '" class="portrait"></div></div>';
+                }
+                else {
+                    txt += '<div class="row"><div class="label claimlabel">' + key + '</div><div class="claim">'+ claim + '</div></div>';
+                }            
             }
-            else {
-                txt += '<div class="row"><div class="label claimlabel">' + key + '</div><div class="claim">'+ claim + '</div></div>';
-            }            
+            $('#credentials').html('<div class="credentials">' + txt + '</div>');
         }
-        $('#credentials').html('<div class="credentials">' + txt + '</div>');
+        else {
+            $('#holder').html('no credential found');
+            $('#originalissuer').html('no credential found');
+            $('#issuerkey').html('no credential found');
+            $('#credentials').html('no credential found');
+        }
 
         var msg='';
         if (response.messages.length > 0) {
