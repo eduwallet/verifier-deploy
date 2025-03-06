@@ -99,7 +99,7 @@ function createNewQR() {
             // a text of length between 192 and 220 characters
             // https://stackoverflow.com/questions/30796584/qrcode-js-error-code-length-overflow-17161056
             // The fix is to pad the uri with spaces until it is 220 characters long
-            code.makeCode(json.requestUri.paEnd(220));
+            code.makeCode(json.requestUri.padEnd(220));
         }
         catch (e) {
             console.log(e);
