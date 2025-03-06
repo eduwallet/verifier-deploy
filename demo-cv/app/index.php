@@ -83,7 +83,16 @@ function createNewQR() {
         dataType: 'json'
     })
     .then((json) => {
-        code.makeCode(json.requestUri);
+        try {
+            // there is an obscure bug that triggers if you give the library
+            // a text of length between 192 and 220 characters
+            // https://stackoverflow.com/questions/30796584/qrcode-js-error-code-length-overflow-17161056
+            // The fix is to pad the uri with spaces until it is 220 characters long
+            code.makeCode(json.requestUri.paEnd(220));
+        }
+        catch (e) {
+            console.log(e);
+        }
         state = json.state;
     });
 }
