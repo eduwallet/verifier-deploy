@@ -27,7 +27,7 @@ include('config.php');
                             <div class="issuer">
                                 <h3 class="issuertitle"><span class='issuer expand'>(+)</span><?= $issuer["name"] ?></h3>
                                 <div class='credentials-wrapper'><div class="credentials">
-                                    <?php foreach ($issuer["credentials"] as $credential):?>
+                                    <?php foreach ($issuer["credentials"] as $credential) :?>
                                         <div class="credential">
                                             <button data-cred='<?php echo json_encode(["group" => $gkey, "issuer" => $ikey, "credential" => $credential['short']]) ?>'>
                                                 <?=  $credential['name'] ?>

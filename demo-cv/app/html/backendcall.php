@@ -7,7 +7,7 @@ $state = [
     'id' => $stateid
 ];
 $states = $_SESSION['states'] ?? [];
-        
+
 include('config.php');
 include('setTokens.php');
 $groups = setTokens($groups);
@@ -160,7 +160,7 @@ switch ($_POST['action']) {
             http_response_code(403);
             die(403);
         }
-        
+
         $checkUri = $states[$state]->checkUri;
         curl_setopt($ch, CURLOPT_URL, $checkUri);
         curl_setopt($ch, CURLOPT_HTTPGET, true);
@@ -177,7 +177,7 @@ switch ($_POST['action']) {
                 http_response_code(403);
                 die(403);
             }
-            switch($status) {
+            switch ($status) {
                 case 'OFFER_CREATED':
                 case 'OFFER_URI_RETRIEVED':
                 case 'ACCESS_TOKEN_REQUESTED':
@@ -191,7 +191,7 @@ switch ($_POST['action']) {
                 default:
                 case 'ERROR':
                     $state['status'] = 'error';
-                    break;                
+                    break;
             }
         }
         else {
@@ -200,7 +200,7 @@ switch ($_POST['action']) {
                 http_response_code(403);
                 die(403);
             }
-            switch($status) {
+            switch ($status) {
                 case 'INITIALIZED':
                 case 'AUTHORIZATION_REQUEST_CREATED':
                 case 'AUTHORIZATION_REQUEST_RETRIEVED':
@@ -212,7 +212,7 @@ switch ($_POST['action']) {
                     break;
                 default:
                     $state['status'] = 'error';
-                    break; 
+                    break;
             }
         }
         echo json_encode($response);
