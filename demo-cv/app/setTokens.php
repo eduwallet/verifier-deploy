@@ -1,62 +1,62 @@
 <?php
 
 function setTokens($groups) {
-    $groups['ptdev']['mbob']['token'] = '';
-    $groups['ptdev']['tun']['token'] = '';
-    $groups['ptdev']['uvh']['token'] = '';
-    $groups['ptdev']['hbot']['token'] = '';
-    $groups['ptdev']['epi']['token'] = '';
-    $groups['ptdev']['nlgov']['token'] = '';
-    $groups['ptdev']['nbgov']['token'] = '';
-    $groups['ptdev']['sandbox']['token'] = '';
-    $groups['ptdev']['sandboxver']['token'] = '';
+    $groups['ptdev']['issuers']['mbob']['token'] = '';
+    $groups['ptdev']['issuers']['tun']['token'] = '';
+    $groups['ptdev']['issuers']['uvh']['token'] = '';
+    $groups['ptdev']['issuers']['hbot']['token'] = '';
+    $groups['ptdev']['issuers']['epi']['token'] = '';
+    $groups['ptdev']['issuers']['nlgov']['token'] = '';
+    $groups['ptdev']['issuers']['nbgov']['token'] = '';
+    $groups['ptdev']['issuers']['sandbox']['token'] = '';
+    $groups['ptdev']['issuers']['sandboxver']['token'] = '';
 
-    $groups['pttest']['mbob']['token'] = '';
-    $groups['pttest']['tun']['token'] = '';
-    $groups['pttest']['uvh']['token'] = '';
-    $groups['pttest']['hbot']['token'] = '';
-    $groups['pttest']['epi']['token'] = '';
-    $groups['pttest']['nlgov']['token'] = '';
-    $groups['pttest']['nbgov']['token'] = '';
-    $groups['pttest']['sandbox']['token'] = '';
-    $groups['pttest']['sandboxver']['token'] = '';
+    $groups['pttest']['issuers']['mbob']['token'] = '';
+    $groups['pttest']['issuers']['tun']['token'] = '';
+    $groups['pttest']['issuers']['uvh']['token'] = '';
+    $groups['pttest']['issuers']['hbot']['token'] = '';
+    $groups['pttest']['issuers']['epi']['token'] = '';
+    $groups['pttest']['issuers']['nlgov']['token'] = '';
+    $groups['pttest']['issuers']['nbgov']['token'] = '';
+    $groups['pttest']['issuers']['sandbox']['token'] = '';
+    $groups['pttest']['issuers']['sandboxver']['token'] = '';
 
-    $groups['ptstage']['mbob']['token'] = '';
-    $groups['ptstage']['tun']['token'] = '';
-    $groups['ptstage']['uvh']['token'] = '';
-    $groups['ptstage']['hbot']['token'] = '';
-    $groups['ptstage']['epi']['token'] = '';
-    $groups['ptstage']['nlgov']['token'] = '';
-    $groups['ptstage']['nbgov']['token'] = '';
-    $groups['ptstage']['sandbox']['token'] = '';
-    $groups['ptstage']['sandboxver']['token'] = '';
+    $groups['ptstage']['issuers']['mbob']['token'] = '';
+    $groups['ptstage']['issuers']['tun']['token'] = '';
+    $groups['ptstage']['issuers']['uvh']['token'] = '';
+    $groups['ptstage']['issuers']['hbot']['token'] = '';
+    $groups['ptstage']['issuers']['epi']['token'] = '';
+    $groups['ptstage']['issuers']['nlgov']['token'] = '';
+    $groups['ptstage']['issuers']['nbgov']['token'] = '';
+    $groups['ptstage']['issuers']['sandbox']['token'] = '';
+    $groups['ptstage']['issuers']['sandboxver']['token'] = '';
 
-    $groups['ptprod']['mbob']['token'] = '';
-    $groups['ptprod']['tun']['token'] = '';
-    $groups['ptprod']['uvh']['token'] = '';
-    $groups['ptprod']['hbot']['token'] = '';
-    $groups['ptprod']['epi']['token'] = '';
-    $groups['ptprod']['nlgov']['token'] = '';
-    $groups['ptprod']['nbgov']['token'] = '';
-    $groups['ptprod']['sandbox']['token'] = '';
-    $groups['ptprod']['sandboxver']['token'] = '';
+    $groups['ptprod']['issuers']['mbob']['token'] = '';
+    $groups['ptprod']['issuers']['tun']['token'] = '';
+    $groups['ptprod']['issuers']['uvh']['token'] = '';
+    $groups['ptprod']['issuers']['hbot']['token'] = '';
+    $groups['ptprod']['issuers']['epi']['token'] = '';
+    $groups['ptprod']['issuers']['nlgov']['token'] = '';
+    $groups['ptprod']['issuers']['nbgov']['token'] = '';
+    $groups['ptprod']['issuers']['sandbox']['token'] = '';
+    $groups['ptprod']['issuers']['sandboxver']['token'] = '';
 
-    $groups['pdev']['eduid']['token'] = '';
-    $groups['pdev']['eduidver']['token'] = '';
+    $groups['pdev']['issuers']['eduid']['token'] = '';
+    $groups['pdev']['issuers']['eduidver']['token'] = '';
 
-    $groups['ptest']['eduid']['token'] = '';
-    $groups['ptest']['eduidver']['token'] = '';
+    $groups['ptest']['issuers']['eduid']['token'] = '';
+    $groups['ptest']['issuers']['eduidver']['token'] = '';
 
-    $groups['pstage']['eduid']['token'] = '';
-    $groups['pstage']['eduidver']['token'] = '';
+    $groups['pstage']['issuers']['eduid']['token'] = '';
+    $groups['pstage']['issuers']['eduidver']['token'] = '';
 
-    $groups['pprod']['eduid']['token'] = '';
-    $groups['pprod']['eduidver']['token'] = '';
+    $groups['pprod']['issuers']['eduid']['token'] = '';
+    $groups['pprod']['issuers']['eduidver']['token'] = '';
 
-    $groups['edev']['edubadges']['token'] = '';
-    $groups['etest']['edubadges']['token'] = '';
-    $groups['estage']['edubadges']['token'] = '';
-    $groups['eprod']['edubadges']['token'] = '';
+    $groups['edev']['issuers']['edubadges']['token'] = '';
+    $groups['etest']['issuers']['edubadges']['token'] = '';
+    $groups['estage']['issuers']['edubadges']['token'] = '';
+    $groups['eprod']['issuers']['edubadges']['token'] = '';
 
     return $groups;
 }

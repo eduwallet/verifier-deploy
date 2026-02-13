@@ -23,7 +23,7 @@ $ckey = $_POST['credential'] ?? ($_GET['credential'] ?? '');
 $gkey = $_POST['group'] ?? ($_GET['group'] ?? '');
 $ikey = $_POST['issuer'] ?? ($_GET['issuer'] ?? '');
 
-if (isset($_POST['state'])) {
+if (isset($_POST['state']) && empty($gkey)) {
     $stateid = $_POST['state'];
     if (isset($states[$stateid])) {
         $state = $states[$stateid];
@@ -32,6 +32,7 @@ if (isset($_POST['state'])) {
         $ckey = $state['credential'];
     }
 }
+error_log("$gkey $ikey $ckey");
 
 if (!isset($groups[$gkey])) {
     error_log("invalid group selected $gkey");
@@ -69,7 +70,8 @@ $ch = curl_init();
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 curl_setopt($ch, CURLOPT_HEADER, false);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'Authorization: Bearer ' . $bearerToken
+    'Authorization: Bearer ' . $bearerToken,
+    'Content-type: application/json'
 ]);
 
 $baseurl = $group['url'];
@@ -84,39 +86,41 @@ switch ($_POST['action']) {
     case 'create':
         curl_setopt($ch, CURLOPT_POST, true);
         if (($issuer['type'] ?? 'issuer') === 'issuer') {
+            error_log(json_encode($cred));
             $data = [
-                "credentials" => [$credential['credentialId']]
+                "credentials" => [$cred['credentialId']]
             ];
-            if ($credential['flow'] == 'preauth') {
+            if ($cred['flow'] == 'preauth') {
                 $data['grants'] = ['urn:ietf:params:oauth:grant-type:pre-authorized_code' => ['pre-authorized_code' => 'generate']];
             }
             else {
                 $data['grants'] = ['authorization_code' => ["issuer_state" => "generate"]];
             }
 
-            if (isset($credential['data'])) {
-                $data['credentialDataSupplierInput'] = $credential['data'];
+            if (isset($cred['data'])) {
+                $data['credentialDataSupplierInput'] = $cred['data'];
             }
-            else if (isset($credential['credential'])) {
-                $data['credential'] = $credential['credential'];
+            else if (isset($cred['credential'])) {
+                $data['credential'] = $cred['credential'];
             }
-            else if(isset($credential['callback'])) {
-                $data['credential_callback'] = $credential['callback'] + "&group=$gkey&issuer=$ikey&credential=$ckey&token=callback";
+            else if(isset($cred['callback'])) {
+                $data['credential_callback'] = $cred['callback'] + "&group=$gkey&issuer=$ikey&credential=$ckey&token=callback";
             }
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-            curl_setopt($ch, CURLOPT_URL, $baseurl . '/api/' . $credential);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            error_log("calling $baseurl with " . json_encode($data));
+            curl_setopt($ch, CURLOPT_URL, "https://" . $baseurl . '/api/create-offer');
         }
         else {
             curl_setopt($ch, CURLOPT_POSTFIELDS, [
                 // empty data set for now
             ]);
-            curl_setopt($ch, CURLOPT_URL, $baseurl . '/api/create-offer/' . $credential['presentation']);
+            curl_setopt($ch, CURLOPT_URL, "https://" . $baseurl . '/api/create-offer/' . $cred['presentation']);
         }
 
         try {
-            error_log("calling curl_exec " . $serviceurl . '/' . $credential);
-            $response = json_decode(curl_exec($ch));
+            $response = curl_exec($ch);
             error_log("output is " . json_encode($response));
+            $response = json_decode($response);
         }
         catch (Exception $e) {
             error_log("caught exception " . $e->getMessage());
@@ -129,7 +133,7 @@ switch ($_POST['action']) {
 
         $state['group'] = $gkey;
         $state['issuer'] = $ikey;
-        $state['credential'] = $credential;
+        $state['credential'] = $ckey;
         if (($issuer['type'] ?? 'issuer') === 'issuer') {
             echo json_encode([
                 'state' => $stateid,
@@ -146,6 +150,7 @@ switch ($_POST['action']) {
             $state['uri'] = $response->requestUri;
             $state['checkUri'] = $response->checkUri;
         }
+        error_log(json_encode($state));
         break;
 
     case 'state':
