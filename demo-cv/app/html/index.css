@@ -26,6 +26,19 @@ body .wrapper button {
     margin-right: 20px;
 }
 
+body .qrcodeui button {
+    background-color: #c33;
+    width: 180px;
+    height: 40px;
+    font-size: normal;
+    margin: 10px 10px 0px 0px;
+    position: absolute;
+    bottom: 10px;
+}
+body .qrcodeui button.right { 
+    right: 10px;
+}
+
 .group .issuers {
     display:none;
 }
@@ -38,3 +51,12 @@ body .wrapper button {
     flex-direction: row;
     flex-flow: row wrap;
 }
+
+.qrcodeui { 
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+.qrcodeui .stage2, .qrcodeui .stage3, .qrcodeui .stage4 { width: 400px; height: 400px; position: relative;}
+.qrcode { margin-left: 80px; }
+.qrcode canvas { display: none; }

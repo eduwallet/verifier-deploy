@@ -6,10 +6,12 @@ services:
     container_name: "democv"
     hostname: democv
     restart: unless-stopped
+    environment:
+      ISSUER_DEV_MBOB: '${ISSUER_DEV_MBOB}'
     ports:
       - 8080:80
     volumes:
-      - ../app:/var/www/html
+      - ../app/html:/var/www/html
     networks:
       - eduwallet_verifiers
 

@@ -23,42 +23,49 @@ include('config.php');
                 <div class="group">
                     <h1 class="grouptitle"><span class='group expand'>(+)</span><?= $group['name'] ?></h1>
                     <div class="issuers">
-                        <?php foreach ($group['issuers'] as $ikey => $issuer):?>
+                        <?php foreach ($group['issuers'] as $ikey => $issuer) :?>
                             <div class="issuer">
                                 <h3 class="issuertitle"><span class='issuer expand'>(+)</span><?= $issuer["name"] ?></h3>
-                                <div class='credentials-wrapper'><div class="credentials">
+                                <div class='credentials-wrapper'>
+                                    <div class='qrcodeui'>
+                                        <div class="stage2">
+                                            <h1 class="credential"></h1>
+                                            <p>Please start the flow by scanning the QR code with your wallet app</p>
+                                            <div class="qrcode"></div>
+                                            <button class="refresh">Refresh</button>                                        
+                                            <button class="close right">Close</button>  
+                                        </div>
+                                        <div class="stage3">
+                                            <H1>Requesting Response</H1>
+                                            <p>Please proceed on your device to select the correct requested credential.</p>
+                                            <button class="close right">Close</button>
+                                        </div>
+                                        <div class="stage4">
+                                            <H1>Flow Completed</H1>
+                                            <button class="close right">Close</button>
+                                        </div>
+                                    </div>
+                                    <div class="credentials">
                                     <?php foreach ($issuer["credentials"] as $credential) :?>
                                         <div class="credential">
-                                            <button data-cred='<?php echo json_encode(["group" => $gkey, "issuer" => $ikey, "credential" => $credential['short']]) ?>'>
+                                            <button class="cred" data-cred='<?php echo json_encode(["group" => $gkey, "issuer" => $ikey, "credential" => $credential['short']]) ?>'>
                                                 <?=  $credential['name'] ?>
                                             </button>
                                         </div>
                                     <?php endforeach; ?>
-                                </div></div>
+                                    </div>
+                                </div>
                             </div>
                         <?php endforeach; ?>
                     </div>
                 </div>
                 <?php endforeach; ?>
             </div>
-            <div id="stage2">
-                <p>Please start the flow by scanning the QR code with your wallet app</p>
-                <div id="qrcode"></div>
-                <button id="refresh">Refresh the code</button>
-            </div>
-            <div id="stage3">
-                <H1>Requesting Response</H1>
-                <p>Please proceed on your device to select the correct requested credential.</p>
-            </div>
-            <div id="stage4">
-                <H1>Flow Completed</H1>
-                <button id="return">Return to the front page</button>
-            </div>
         </div>
 
         <script type="text/javascript">
 
-var code = new QRCode(document.getElementById("qrcode"));
+var code;
 var response = null;
 var backendurl = 'backendcall.php';
 var selectedcredential = '';
@@ -68,8 +75,10 @@ var state = 'none';
 var currentStage = 'stage1';
 var isWaiting = false;
 
-function createNewQR() {
-    $.ajax({
+function createNewQR(el) {
+    $(el).html('');
+    code = new QRCode(el);
+    return $.ajax({
         url: backendurl,
         method:'POST',
         data: {
@@ -88,50 +97,76 @@ function createNewQR() {
             // a text of length between 192 and 220 characters
             // https://stackoverflow.com/questions/30796584/qrcode-js-error-code-length-overflow-17161056
             // The fix is to pad the uri with spaces until it is 220 characters long
+            console.log('making QR code with ', json.requestUri);
             code.makeCode(json.requestUri.padEnd(220));
         }
         catch (e) {
             console.log(e);
+            alert("There was an error creating a QR code" + e);
         }
         state = json.state;
+        return true;
+    })
+    .catch((e) => {
+        console.log(e);
+        if (e.status == 403) {
+            alert("Access was forbidden");
+        }
+        else if(e.status == 404) {
+            alert("Credential was not found");
+        }
+        else {
+            alert("There was an error creating a url " + e.statusText);
+        }
+        return false;
     });
 }
 
-$('#stage1 button').on('click', function() {
-    console.log("clicked on button on stage1");
+$('button.cred').on('click', function() {
     var data = JSON.parse($(this).attr('data-cred'));
-    console.log('button data is ', data);
+    var qrelement = $('.qrcodeui .qrcode', $(this).parents('.credentials-wrapper'))[0];
     selectedcredential = data.credential;
     selectedgroup = data.group;
     selectedissuer = data.issuer;
-    createNewQR();
-    currentStage = 'stage2';
-    console.log('switching to stage 2');
-    flipStage();
+    createNewQR(qrelement).then((e) => {
+        if (e) {
+            currentStage = 'stage2';
+            console.log('switching to stage 2');
+            flipStage();
+        }
+    });
 });
-$('#refresh').on('click', () => createNewQR());
-$('#return').on('click', () => {
+$('button.refresh').on('click', function() {
+    var qrelement = $('.qrcode', $(this).parent())[0];
+    createNewQR(qrelement).then((e) => {
+        if (e) {
+            currentStage = 'stage2';
+            console.log('switching to stage 2');
+            flipStage();
+        }
+    });
+});
+$('button.close').on('click', () => {
     currentStage = 'stage1';
     flipStage();
 });
 
 function flipStage() {
-    $('#stage4').hide();
-    $('#stage3').hide();
-    $('#stage2').hide();
-    $('#stage1').hide();
+    $('.stage4').hide();
+    $('.stage3').hide();
+    $('.stage2').hide();
+    $('.stage1').hide();
     if (currentStage == 'stage4') {
-        $('#stage4').show();
+        $('.stage4').show();
     }
     else if (currentStage == 'stage3') {
-        $('#stage3').show();
+        $('.stage3').show();
     }
     else if (currentStage == 'stage2') {
-        createNewQR();
-        $('#stage2').show();
+        $('.stage2').show();
     }
     else {
-        $('#stage1').show();
+        $('.stage1').show();
     }
 }
 
@@ -157,7 +192,6 @@ window.setInterval(function() {
             }
             else if(json.status == 'finished') {
                 currentStage = 'stage4';
-                response = json.result;
                 flipStage();
             }
             else if(json.status == 'error') {
@@ -170,7 +204,7 @@ window.setInterval(function() {
             isWaiting = false;
         });
     }
-}, 10000);
+}, 1000);
 
 $('.expand').on('click', function() {
     var expanded = $(this).data('expanded');

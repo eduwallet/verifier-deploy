@@ -61,7 +61,7 @@ if ($cred === null) {
 
 $bearerToken = $issuer['token'] ?? null;
 if (empty($bearerToken)) {
-    error_log('Issuer not configured');
+    error_log('Issuer not configured, missing token');
     http_response_code(403);
     die(403);
 }
@@ -137,10 +137,12 @@ switch ($_POST['action']) {
         if (($issuer['type'] ?? 'issuer') === 'issuer') {
             echo json_encode([
                 'state' => $stateid,
-                'requestUri' => $response->uri
+                'requestUri' => $response->uri,
+                'id' => $response->id
             ]);
             $state['uri'] = $response->uri;
-            $state['checkUri'] = $baseurl . '/api/check-offer';
+            $state['checkUri'] = "https://" . $baseurl . '/api/check-offer';
+            $state["postData"] = ["id" => $response->id];
         }
         else {
             echo json_encode([
@@ -160,12 +162,18 @@ switch ($_POST['action']) {
             http_response_code(403);
             die(403);
         }
-
-        $checkUri = $states[$state]->checkUri;
-        curl_setopt($ch, CURLOPT_URL, $checkUri);
-        curl_setopt($ch, CURLOPT_HTTPGET, true);
-
-        $response = json_decode(curl_exec($ch));
+        $state = $states[$stateid];
+        error_log("state is "  . json_encode($state));
+        $checkUri = $state['checkUri'] ?? null;
+        if (!empty($checkUri)) {
+            error_log("calling $checkUri");
+            curl_setopt($ch, CURLOPT_URL, $checkUri);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($state["postData"]));
+            error_log("posting " . json_encode($state["postData"]));
+            $response = json_decode(curl_exec($ch));
+            error_log(json_encode($response));
+        }
         if (!is_object($response)) {
             http_response_code(403);
             die(403);
@@ -177,8 +185,11 @@ switch ($_POST['action']) {
                 http_response_code(403);
                 die(403);
             }
+            error_log("status is $status");
             switch ($status) {
                 case 'OFFER_CREATED':
+                    $state['status'] = "created";
+                    break;
                 case 'OFFER_URI_RETRIEVED':
                 case 'ACCESS_TOKEN_REQUESTED':
                 case 'ACCESS_TOKEN_CREATED':
@@ -200,9 +211,12 @@ switch ($_POST['action']) {
                 http_response_code(403);
                 die(403);
             }
+            error_log("status is $status");
             switch ($status) {
                 case 'INITIALIZED':
                 case 'AUTHORIZATION_REQUEST_CREATED':
+                    $state['status'] = "created";
+                    break;
                 case 'AUTHORIZATION_REQUEST_RETRIEVED':
                 case 'RESPONSE_PROCESSING':
                     $state['status'] = 'processing';
@@ -215,7 +229,9 @@ switch ($_POST['action']) {
                     break;
             }
         }
-        echo json_encode($response);
+        echo json_encode([
+            "status" => $state["status"]
+        ]);
         break;
     case 'datacallback':
         if ($token !== 'callback') {

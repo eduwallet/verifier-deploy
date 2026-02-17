@@ -270,14 +270,14 @@ $pid = [
         "age_in_years" => 17,
         "age_over_13" => 1,
         "age_over_18" => 0,
-        "sex" => 1        
+        "sex" => 1
     ]
 ];
 
 $eduid = [
     "name" => "eduID",
     "short" => "eduid",
-    "credentialId" => "eduid",
+    "credentialId" => "eduID",
     "flow" => "auth",
     "data" => []
 ];

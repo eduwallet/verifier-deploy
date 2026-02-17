@@ -1,7 +1,7 @@
 <?php
 
 function setTokens($groups) {
-    $groups['ptdev']['issuers']['mbob']['token'] = '';
+    $groups['ptdev']['issuers']['mbob']['token'] = getenv('ISSUER_DEV_MBOB');
     $groups['ptdev']['issuers']['tun']['token'] = '';
     $groups['ptdev']['issuers']['uvh']['token'] = '';
     $groups['ptdev']['issuers']['hbot']['token'] = '';
