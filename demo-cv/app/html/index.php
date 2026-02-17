@@ -1,11 +1,10 @@
 <?php
 session_start();
-include_once(__DIR__ . '/../vendor/autoload.php');
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
-$dotenv->safeLoad();
 
 $adminToken = $_SESSION['token'] ?? uniqid();
 $_SESSION['token'] = $adminToken;
+
+include('config.php');
 
 ?>
 <!doctype html>
@@ -19,56 +18,41 @@ $_SESSION['token'] = $adminToken;
         <div class='wrapper'>
             <div id="stage1">
                 <h1>Welcome</h1>
-                <p>Welcome to the Front-End Verifier Demo Page. Please select the credential that you want to verify by clicking the relevant button below.</p>
-                <div class='buttons'>
-                    <button id='abc'>Academic Base Credential</button>
-                    <button id='pid'>Personal ID</button>
+                <p>Welcome to the Front-End Testing Page. Please select the credential that you want to verify by clicking the relevant button below.</p>
+                <?php foreach ($groups as $gkey => $group) : ?>
+                <div class="group">
+                    <h1 class="grouptitle"><span class='group expand'>(+)</span><?= $group['name'] ?></h1>
+                    <div class="issuers">
+                        <?php foreach ($group['issuers'] as $ikey => $issuer):?>
+                            <div class="issuer">
+                                <h3 class="issuertitle"><span class='issuer expand'>(+)</span><?= $issuer["name"] ?></h3>
+                                <div class='credentials-wrapper'><div class="credentials">
+                                    <?php foreach ($issuer["credentials"] as $credential) :?>
+                                        <div class="credential">
+                                            <button data-cred='<?php echo json_encode(["group" => $gkey, "issuer" => $ikey, "credential" => $credential['short']]) ?>'>
+                                                <?=  $credential['name'] ?>
+                                            </button>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div></div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
+                <?php endforeach; ?>
             </div>
             <div id="stage2">
-                <p>Please start the verification flow by scanning the QR code with your wallet app</p>
+                <p>Please start the flow by scanning the QR code with your wallet app</p>
                 <div id="qrcode"></div>
-                <button id="verifier">Refresh the code</button>
+                <button id="refresh">Refresh the code</button>
             </div>
             <div id="stage3">
-                <H1>Requesting Credential</H1>
+                <H1>Requesting Response</H1>
                 <p>Please proceed on your device to select the correct requested credential.</p>
             </div>
             <div id="stage4">
-                <H1>Credential Received</H1>
-                <h4>Metadata</h4>
-                <div class='metadatablock'>
-                    <div class='row'>
-                        <div class='label'>State identifier</div>
-                        <div class="metadata"><span id='stateid'></span></div>
-                    </div>
-                    <div class='row'>
-                        <div class='label'>Nonce</div>
-                        <div class="metadata"><span id='nonce'></span></div>
-                    </div>
-                    <div class='row'>
-                        <div class='label'>Wallet key</div>
-                        <div class="metadata"><span id='issuer'></span></div>
-                    </div>
-                    <div class='row'>
-                        <div class='label'>VC Holder key</div>
-                        <div class="metadata"><span id='holder'></span></div>
-                    </div>
-                    <div class='row'>
-                        <div class='label'>VC Issuer ID</div>
-                        <div class="metadata"><span id='originalissuer'></span></div>
-                    </div>
-                    <div class='row'>
-                        <div class='label'>VC Issuer key</div>
-                        <div class="metadata"><span id='issuerkey'></span></div>
-                    </div>
-                </div>
-
-                <h4>Credential data</h4>
-                <div id='credentials'></div>
-
-                <h4>Validation Messages</h4>
-                <div id='messages'></div>
+                <H1>Flow Completed</H1>
+                <button id="return">Return to the front page</button>
             </div>
         </div>
 
@@ -77,7 +61,9 @@ $_SESSION['token'] = $adminToken;
 var code = new QRCode(document.getElementById("qrcode"));
 var response = null;
 var backendurl = 'backendcall.php';
-var selectedcredential = 'PID';
+var selectedcredential = '';
+var selectedgroup = '';
+var selectedissuer = '';
 var state = 'none';
 var currentStage = 'stage1';
 var isWaiting = false;
@@ -88,8 +74,11 @@ function createNewQR() {
         method:'POST',
         data: {
             token: <?php echo json_encode($adminToken); ?>,
+            state: state,
             action: "create",
-            credential: selectedcredential
+            credential: selectedcredential,
+            group: selectedgroup,
+            issuer: selectedissuer
         },
         dataType: 'json'
     })
@@ -108,17 +97,23 @@ function createNewQR() {
     });
 }
 
-$('#abc').on('click', function() {
-    selectedcredential = 'ABC';
+$('#stage1 button').on('click', function() {
+    console.log("clicked on button on stage1");
+    var data = JSON.parse($(this).attr('data-cred'));
+    console.log('button data is ', data);
+    selectedcredential = data.credential;
+    selectedgroup = data.group;
+    selectedissuer = data.issuer;
+    createNewQR();
     currentStage = 'stage2';
+    console.log('switching to stage 2');
     flipStage();
 });
-$('#pid').on('click', function() {
-    selectedcredential = 'PID';
-    currentStage = 'stage2';
+$('#refresh').on('click', () => createNewQR());
+$('#return').on('click', () => {
+    currentStage = 'stage1';
     flipStage();
 });
-$('#verifier').on('click', () => createNewQR());
 
 function flipStage() {
     $('#stage4').hide();
@@ -127,47 +122,6 @@ function flipStage() {
     $('#stage1').hide();
     if (currentStage == 'stage4') {
         $('#stage4').show();
-
-        // metadata
-        $('#issuer').html(response.issuer);
-        $('#stateid').html(response.state);
-        $('#nonce').html(response.nonce);
-
-        if (response.credentials && response.credentials.length > 0) {
-            $('#holder').html(response.credentials[0].holder);
-            $('#originalissuer').html(response.credentials[0].issuer);
-            $('#issuerkey').html(response.credentials[0].issuerKey);
-
-            var txt='';
-            for(var i of Object.keys(response.credentials[0].claims)) {
-                var key = i;
-                var claim = response.credentials[0].claims[key];
-                if (typeof(claim) == 'string' && claim.startsWith('data:image/')) {
-                    txt += '<div class="row"><div class="label claimlabel">' + key + '</div><div class="claim portraitclaim"><img src="' + claim + '" class="portrait"></div></div>';
-                }
-                else {
-                    txt += '<div class="row"><div class="label claimlabel">' + key + '</div><div class="claim">'+ claim + '</div></div>';
-                }            
-            }
-            $('#credentials').html('<div class="credentials">' + txt + '</div>');
-        }
-        else {
-            $('#holder').html('no credential found');
-            $('#originalissuer').html('no credential found');
-            $('#issuerkey').html('no credential found');
-            $('#credentials').html('no credential found');
-        }
-
-        var msg='';
-        if (response.messages.length > 0) {
-            for (var message of response.messages) {
-                msg += '<div class="row"><div class="label messagelabel">' + message.code + '</div><div class="message">'+ message.message + '</div></div>';
-            }
-        }
-        else {
-            msg += '<div class="row"><div class="label messagelabel">OKAY</div><div class="message">No problems found while validating</div></div>';
-        }
-        $('#messages').html('<div class="messages">' + msg + '</div>');
     }
     else if (currentStage == 'stage3') {
         $('#stage3').show();
@@ -197,13 +151,18 @@ window.setInterval(function() {
         })
         .then((json) => {
             isWaiting = false;
-            if (json.status == 'AUTHORIZATION_REQUEST_RETRIEVED' || json.status == 'RESPONSE_PROCESSING') {
+            if (json.status == 'processing') {
                 currentStage = 'stage3';
                 flipStage();
             }
-            else if(json.status == 'RESPONSE_RECEIVED') {
+            else if(json.status == 'finished') {
                 currentStage = 'stage4';
                 response = json.result;
+                flipStage();
+            }
+            else if(json.status == 'error') {
+                alert('An error was detected in the backend. Please check the output logs and investigate further');
+                currentStage = 'stage1';
                 flipStage();
             }
         })
@@ -211,7 +170,37 @@ window.setInterval(function() {
             isWaiting = false;
         });
     }
-}, 1000);
+}, 10000);
+
+$('.expand').on('click', function() {
+    var expanded = $(this).data('expanded');
+    if (!expanded) {
+        expanded = {
+            isExpanded: false
+        };
+    }
+    if (expanded.isExpanded === false) {
+        expanded.isExpanded = true;
+        $(this).html("(-)");
+        if ($(this).hasClass('group')) {
+            $('.issuers', $(this).parent().parent()).show();
+        }
+        else {
+            $('.credentials-wrapper', $(this).parent().parent()).show();
+        }
+    }
+    else {
+        expanded.isExpanded = false;
+        $(this).html("(+)");
+        if ($(this).hasClass('group')) {
+            $('.issuers', $(this).parent().parent()).hide();
+        }
+        else {
+            $('.credentials-wrapper', $(this).parent().parent()).hide();
+        }
+    }
+    $(this).data('expanded', expanded);
+});
             </script>
         </div>
     </body>
