@@ -286,7 +286,7 @@ $entitlement = [
     "short" => "entitlement",
     "credentialId" => "entitlement",
     "flow" => "auth",
-    "data" => []
+    "data" => ["entitlements" => ["urn:mace:surf.nl:invite."]]
 ];
 
 $proeftuin = [
