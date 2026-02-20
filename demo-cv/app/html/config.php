@@ -389,13 +389,13 @@ $groups = [
         "url" => "agent.dev.eduwallet.nl",
         "tenantDomain" => false
     ],
-    "pttest" => [
-        "name" => "Proeftuin Playground",
-        "env" => "playground",
-        "issuers" => $proeftuin,
-        "url" => "agent.playground.eduwallet.nl",
-        "tenantDomain" => true
-    ],
+    //"pttest" => [
+    //    "name" => "Proeftuin Playground",
+    //    "env" => "playground",
+    //    "issuers" => $proeftuin,
+    //    "url" => "agent.playground.eduwallet.nl",
+    //    "tenantDomain" => true
+    //],
     "ptstage" => [
         "name" => "Proeftuin Staging",
         "env" => "staging",
