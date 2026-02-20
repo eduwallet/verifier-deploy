@@ -1,7 +1,7 @@
 <?php
 
 function setTokens($groups) {
-    $envfile = file(__DIR__ . "./.env");
+    $envfile = file(__DIR__ . "/.env");
     $envs = [];
     foreach ($envfile as $line) {
         if (strlen(trim($line))) {
