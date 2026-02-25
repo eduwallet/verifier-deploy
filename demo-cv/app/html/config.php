@@ -241,9 +241,10 @@ $pid = [
     "name" => "Personal ID",
     "short" => "pid",
     "credentialId" => "PID",
+    "presentation" => "PID",
     "flow" => "preauth",
     "data" => [
-        "personal_administrative_number" => "999782771",      
+        "personal_administrative_number" => "999782771",
         "document_number" => "N27P328I12",
         "given_name" => "Erica",
         "family_name" => "Tester",
@@ -278,6 +279,7 @@ $eduid = [
     "name" => "eduID",
     "short" => "eduid",
     "credentialId" => "eduID",
+    "presentation" => "eduID",
     "flow" => "auth",
     "data" => []
 ];
@@ -294,48 +296,56 @@ $proeftuin = [
         "name" => "MBO Beek",
         "short" => "mbob",
         "type" => "issuer",
+        "tool" => "agent",
         "credentials" => [$abc, $aec, $sc, $scc, $sdc, $eec, $obc]
     ],
     "uvh" => [
         "name" => "Universiteit van Harderwijk",
         "short" => "uvh",
         "type" => "issuer",
+        "tool" => "agent",
         "credentials" => [$abc, $aec, $sc, $scc, $sdc, $eec, $obc]
     ],
     "hbot" => [
         "name" => "HBO Texel",
         "short" => "hbot",
         "type" => "issuer",
+        "tool" => "agent",
         "credentials" => [$abc, $aec, $sc, $scc, $sdc, $eec, $obc]
     ],
     "tun" => [
         "name" => "Theed University of Naboo",
         "short" => "tun",
         "type" => "issuer",
+        "tool" => "agent",
         "credentials" => [$abc]
     ],
     "epi" => [
         "name" => "eduID Proeftuin Issuer",
         "short" => "epi",
         "type" => "issuer",
+        "tool" => "agent",
         "credentials" => [$abc]
     ],
     "nlgov" => [
         "name" => "NL Government",
         "short" => "nlgov",
         "type" => "issuer",
+        "tool" => "agent",
         "credentials" => [$pid]
     ],
     "nbgov" => [
         "name" => "Naboo Government",
         "short" => "nbgov",
         "type" => "issuer",
+        "tool" => "agent",
         "credentials" => [$pid]
     ],
     "sandbox" => [
         "name" => "Sandbox",
         "short" => "sandbox",
         "type" => "issuer",
+        "tool" => "agent",
         "credentials" => [
             ["name" => "Academic Base Credential as VCDM2", "short" => "abc_jwt"],
             ["name" => "Academic Base Credential as LDP", "short" => "abc_ld"],
@@ -349,8 +359,9 @@ $proeftuin = [
     ],
     "sandboxver" => [
         "name" => "Sandbox Verifier",
-        "short" => "sandboxver",
+        "short" => "sandbox",
         "type" => "verifier",
+        "tool" => "verifier",
         "credentials" => [$abc, $aec, $sc, $scc, $sdc, $eec, $obc, $pid,
             ["name" => "Generic Credential (VCDM)", "short" => "gc", "presentation" => "GC"],
             ["name" => "Generic Credential (LDP)", "short" => "gcld", "presentation" => "GCLDP"]
@@ -363,12 +374,14 @@ $pilots = [
         "name" => "eduID",
         "short" => "eduid",
         "type" => "issuer",
+        "tool" => "issuer",
         "credentials" => [$eduid, $entitlement]
     ],
     "eduidver" => [
         "name" => "eduID Verifier",
-        "short" => "eduidver",
+        "short" => "eduid",
         "type" => "verifier",
+        "tool" => "verifier",
         "credentials" => [$eduid]
     ],
 ];
@@ -377,6 +390,7 @@ $edubadges = [
         "name" => "EDUBadges",
         "short" => "edubadges",
         "type" => "issuer",
+        "tool" => "issuer",
         "credentials" => [$obcauth]
     ],
 ];
@@ -386,7 +400,7 @@ $groups = [
         "name" => "Proeftuin Development",
         "env" => "dev",
         "issuers" => $proeftuin,
-        "url" => "agent.dev.eduwallet.nl",
+        "url" => "dev.eduwallet.nl",
         "tenantDomain" => false
     ],
     //"pttest" => [
@@ -400,70 +414,70 @@ $groups = [
         "name" => "Proeftuin Staging",
         "env" => "staging",
         "issuers" => $proeftuin,
-        "url" => "agent.staging.eduwallet.nl",
+        "url" => "staging.eduwallet.nl",
         "tenantDomain" => true
     ],
     "ptprod" => [
         "name" => "Proeftuin Productie",
         "env" => "prod",
         "issuers" => $proeftuin,
-        "url" => "agent.eduwallet.nl",
+        "url" => "eduwallet.nl",
         "tenantDomain" => true
     ],
     "pdev" => [
         "name" => "Pilots Development",
         "env" => "dev",
         "issuers" => $pilots,
-        "url" => "issuer.dev.eduid.nl",
+        "url" => "dev.eduid.nl",
         "tenantDomain" => false
     ],
     "ptest" => [
         "name" => "Pilots Playground",
         "env" => "playground",
         "issuers" => $pilots,
-        "url" => "issuer.playground.pilots.eduid.nl",
+        "url" => "playground.pilots.eduid.nl",
         "tenantDomain" => false
     ],
     "pstage" => [
         "name" => "Pilots Staging",
         "env" => "staging",
         "issuers" => $pilots,
-        "url" => "issuer.staging.pilots.eduid.nl",
+        "url" => "staging.pilots.eduid.nl",
         "tenantDomain" => false
     ],
     "pprod" => [
         "name" => "Pilots Productie",
         "env" => "prod",
         "issuers" => $pilots,
-        "url" => "issuer.pilots.eduid.nl",
+        "url" => "pilots.eduid.nl",
         "tenantDomain" => false
     ],
     "edev" => [
         "name" => "EduBadges Development",
         "env" => "dev",
         "issuers" => $edubadges,
-        "url" => "issuer.dev.edubadges.nl",
+        "url" => "dev.edubadges.nl",
         "tenantDomain" => false
     ],
     "etest" => [
         "name" => "EduBadges Playground",
         "env" => "playground",
         "issuers" => $edubadges,
-        "url" => "issuer.playground.pilots.edubadges.nl",
+        "url" => "playground.pilots.edubadges.nl",
         "tenantDomain" => false
     ],
     "estage" => [
         "name" => "EduBadges Staging",
         "env" => "staging",
         "issuers" => $edubadges,
-        "url" => "issuer.staging.pilots.edubadges.nl",
+        "url" => "staging.pilots.edubadges.nl",
         "tenantDomain" => false
     ],
     "eprod" => [
         "name" => "EduBadges Productie",
         "env" => "prod",
         "issuers" => $edubadges,
-        "url" => "issuer.pilots.edubadges.nl",
+        "url" => "pilots.edubadges.nl",
         "tenantDomain" => false
     ],
 ];

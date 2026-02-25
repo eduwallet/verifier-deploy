@@ -75,18 +75,18 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
 ]);
 
 $baseurl = $group['url'];
+$toolname = $issuer['tool'];
 if (($group['tenantDomain'] ?? false) === true) {
-    $baseurl = $issuer['short'] . '.' . $baseurl;
+    $baseurl = $issuer['short'] . '.' . $toolname . '.' . $baseurl;
 }
 else {
-    $baseurl = $baseurl . '/' . $issuer['short'];
+    $baseurl = $toolname . '.' . $baseurl . '/' . $issuer['short'];
 }
 
 switch ($_POST['action']) {
     case 'create':
         curl_setopt($ch, CURLOPT_POST, true);
         if (($issuer['type'] ?? 'issuer') === 'issuer') {
-            error_log(json_encode($cred));
             $data = [
                 "credentials" => [$cred['credentialId']]
             ];
@@ -111,6 +111,7 @@ switch ($_POST['action']) {
             curl_setopt($ch, CURLOPT_URL, "https://" . $baseurl . '/api/create-offer');
         }
         else {
+            error_log("this is a verifier at https://$baseurl/api/create-offer/" . $cred['presentation']);
             curl_setopt($ch, CURLOPT_POSTFIELDS, [
                 // empty data set for now
             ]);
@@ -119,7 +120,7 @@ switch ($_POST['action']) {
 
         try {
             $response = curl_exec($ch);
-            error_log("output is " . json_encode($response));
+            error_log($response);
             $response = json_decode($response);
         }
         catch (Exception $e) {
@@ -152,7 +153,6 @@ switch ($_POST['action']) {
             $state['uri'] = $response->requestUri;
             $state['checkUri'] = $response->checkUri;
         }
-        error_log(json_encode($state));
         break;
 
     case 'state':
