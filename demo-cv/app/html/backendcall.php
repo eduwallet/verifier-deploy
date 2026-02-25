@@ -168,11 +168,17 @@ switch ($_POST['action']) {
         if (!empty($checkUri)) {
             error_log("calling $checkUri");
             curl_setopt($ch, CURLOPT_URL, $checkUri);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($state["postData"]));
-            error_log("posting " . json_encode($state["postData"]));
-            $response = json_decode(curl_exec($ch));
-            error_log(json_encode($response));
+            if (isset($state['postData'])) {
+                curl_setopt($ch, CURLOPT_POST, true);
+                error_log("posting " . json_encode($state["postData"]));
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($state["postData"]));
+            }
+            else {
+                curl_setopt($ch, CURLOPT_POST, false);
+            }
+            $primaryResponse = curl_exec($ch);
+            $response = json_decode($primaryResponse);
+            error_log("response is " . $primaryResponse);
         }
         if (!is_object($response)) {
             http_response_code(403);
