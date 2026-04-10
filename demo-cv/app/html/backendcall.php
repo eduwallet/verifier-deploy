@@ -104,7 +104,7 @@ switch ($_POST['action']) {
                 $data['credential'] = $cred['credential'];
             }
             else if(isset($cred['callback'])) {
-                $data['credential_callback'] = $cred['callback'] + "&group=$gkey&issuer=$ikey&credential=$ckey&token=callback";
+                $data['credential_callback'] = $cred['callback'] . "&group=$gkey&issuer=$ikey&credential=$ckey&token=callback";
             }
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
             error_log("calling $baseurl with " . json_encode($data));
