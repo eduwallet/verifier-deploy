@@ -75,7 +75,7 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
 ]);
 
 $baseurl = $group['url'];
-$toolname = $issuer['tool'];
+$toolname = $group['tool'] ?? $issuer['tool'];
 if (($group['tenantDomain'] ?? false) === true) {
     $baseurl = $issuer['short'] . '.' . $toolname . '.' . $baseurl;
 }

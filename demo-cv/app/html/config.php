@@ -297,35 +297,35 @@ $proeftuin = [
         "short" => "mbob",
         "type" => "issuer",
         "tool" => "agent",
-        "credentials" => [$abc, $aec, $sc, $scc, $sdc, $eec, $obc]
+        "credentials" => [$aec, $sc, $scc, $sdc, $eec, $obc]
     ],
     "uvh" => [
         "name" => "Universiteit van Harderwijk",
         "short" => "uvh",
         "type" => "issuer",
         "tool" => "agent",
-        "credentials" => [$abc, $aec, $sc, $scc, $sdc, $eec, $obc]
+        "credentials" => [$aec, $sc, $scc, $sdc, $eec, $obc]
     ],
     "hbot" => [
         "name" => "HBO Texel",
         "short" => "hbot",
         "type" => "issuer",
         "tool" => "agent",
-        "credentials" => [$abc, $aec, $sc, $scc, $sdc, $eec, $obc]
+        "credentials" => [$aec, $sc, $scc, $sdc, $eec, $obc]
     ],
     "tun" => [
         "name" => "Theed University of Naboo",
         "short" => "tun",
         "type" => "issuer",
         "tool" => "agent",
-        "credentials" => [$abc]
+        "credentials" => []
     ],
     "epi" => [
         "name" => "eduID Proeftuin Issuer",
         "short" => "epi",
         "type" => "issuer",
         "tool" => "agent",
-        "credentials" => [$abc]
+        "credentials" => [$eduid]
     ],
     "nlgov" => [
         "name" => "NL Government",
@@ -362,7 +362,7 @@ $proeftuin = [
         "short" => "sandbox",
         "type" => "verifier",
         "tool" => "verifier",
-        "credentials" => [$abc, $aec, $sc, $scc, $sdc, $eec, $obc, $pid,
+        "credentials" => [$abc, $aec, $sc, $scc, $sdc, $eec, $obc, $pid, $eduid,
             ["name" => "Generic Credential (VCDM)", "short" => "gc", "presentation" => "GC"],
             ["name" => "Generic Credential (LDP)", "short" => "gcld", "presentation" => "GCLDP"]
         ]
@@ -401,7 +401,8 @@ $groups = [
         "env" => "dev",
         "issuers" => $proeftuin,
         "url" => "dev.eduwallet.nl",
-        "tenantDomain" => false
+        "tool" => "issuer",
+        "tenantDomain" => true
     ],
     //"pttest" => [
     //    "name" => "Proeftuin Playground",
