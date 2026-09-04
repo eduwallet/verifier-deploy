@@ -191,6 +191,23 @@ $scc = [
     ]
 ];
 
+$icc = [
+    "name" => "Institution Card Credential",
+    "short" => "icc",
+    "credentialId" => "InstitutionCardCredential",
+    "presentation" => "ICC",
+    "flow" => "auth",
+    "data" => [
+        "name" => "Pietje Puk",
+        "given_name" => "Pietje",
+        "family_name" => "Puk",
+        "email" =>"pietje@example.com",
+        "institution" => "Universiteit van Harderwijk",
+        "affiliations" => "student,ta",
+        "portrait" => "data:image/jpeg;base64,blablabla"
+    ]
+];
+
 $sdc = [
     "name" => "Study Data Credential",
     "short" => "sdc",
@@ -242,7 +259,7 @@ $pid = [
     "short" => "pid",
     "credentialId" => "PID",
     "presentation" => "PID",
-    "flow" => "preauth",
+    "flow" => "auth",
     "data" => [
         "personal_administrative_number" => "999782771",
         "document_number" => "N27P328I12",
@@ -297,21 +314,21 @@ $proeftuin = [
         "short" => "mbob",
         "type" => "issuer",
         "tool" => "agent",
-        "credentials" => [$aec, $sc, $scc, $sdc, $eec, $obc]
+        "credentials" => [$aec, $sc, $scc, $sdc, $eec, $obc, $icc]
     ],
     "uvh" => [
         "name" => "Universiteit van Harderwijk",
         "short" => "uvh",
         "type" => "issuer",
         "tool" => "agent",
-        "credentials" => [$aec, $sc, $scc, $sdc, $eec, $obc]
+        "credentials" => [$aec, $sc, $scc, $sdc, $eec, $obc, $icc]
     ],
     "hbot" => [
         "name" => "HBO Texel",
         "short" => "hbot",
         "type" => "issuer",
         "tool" => "agent",
-        "credentials" => [$aec, $sc, $scc, $sdc, $eec, $obc]
+        "credentials" => [$aec, $sc, $scc, $sdc, $eec, $obc, $icc]
     ],
     "tun" => [
         "name" => "Theed University of Naboo",
@@ -329,14 +346,14 @@ $proeftuin = [
     ],
     "nlgov" => [
         "name" => "NL Government",
-        "short" => "nlgov",
+        "short" => "nl.gov",
         "type" => "issuer",
         "tool" => "agent",
         "credentials" => [$pid]
     ],
     "nbgov" => [
         "name" => "Naboo Government",
-        "short" => "nbgov",
+        "short" => "nb.gov",
         "type" => "issuer",
         "tool" => "agent",
         "credentials" => [$pid]
