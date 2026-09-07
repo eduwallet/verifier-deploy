@@ -300,6 +300,14 @@ $eduid = [
     "flow" => "auth",
     "data" => []
 ];
+$eduidpa = [
+    "name" => "eduID",
+    "short" => "eduid",
+    "credentialId" => "eduID",
+    "presentation" => "eduID",
+    "flow" => "preauth",
+    "data" => []
+];
 $entitlement = [
     "name" => "Entitlement",
     "short" => "entitlement",
@@ -342,7 +350,7 @@ $proeftuin = [
         "short" => "epi",
         "type" => "issuer",
         "tool" => "agent",
-        "credentials" => [$eduid]
+        "credentials" => [$eduidpa]
     ],
     "nlgov" => [
         "name" => "NL Government",
