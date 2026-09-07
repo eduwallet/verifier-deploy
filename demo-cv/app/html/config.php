@@ -306,7 +306,24 @@ $eduidpa = [
     "credentialId" => "eduID",
     "presentation" => "eduID",
     "flow" => "preauth",
-    "data" => []
+    "data" => [
+        "sub" => 12,
+        "schac_home_organisation" => "SURF",
+        "name" => "Pietje Puk",
+        "given_name" => "Caryl",
+        "family_name" => "Van der Bilt",
+        "email" => "charles@example.com",
+        "eduperson_scoped_affiliation" => "student@SURF",
+        "eduperson_assurance" => "http://www.example.com/do-not-trust",
+        "is_student" => 1,
+        "is_faculty" => 0,
+        "is_member" => 1,
+        "is_staff" => 0,
+        "is_alum" => 0,
+        "is_affiliate" => 0,
+        "is_employee" => 0,
+        "is_library-walk-in" => 0
+    ]
 ];
 $entitlement = [
     "name" => "Entitlement",
