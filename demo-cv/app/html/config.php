@@ -343,7 +343,7 @@ $proeftuin = [
     ],
     "mbobauth" => [
         "name" => "MBO Beek (auth flow)",
-        "short" => "mbob",
+        "short" => "mbobauth",
         "type" => "issuer",
         "tool" => "agent",
         "credentials" => [$icc]
