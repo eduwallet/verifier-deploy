@@ -11,9 +11,12 @@ function setTokens($groups) {
     }
 
     $groups['ptdev']['issuers']['mbob']['token'] = $envs['ISSUER_DEV_MBOB'];
+    $groups['ptdev']['issuers']['mbobauth']['token'] = $envs['ISSUER_DEV_MBOBAUTH'];
     $groups['ptdev']['issuers']['tun']['token'] = $envs['ISSUER_DEV_TUN'];
     $groups['ptdev']['issuers']['uvh']['token'] = $envs['ISSUER_DEV_UVH'];
+    $groups['ptdev']['issuers']['uvhauth']['token'] = $envs['ISSUER_DEV_UVHAUTH'];
     $groups['ptdev']['issuers']['hbot']['token'] = $envs['ISSUER_DEV_HBOT'];
+    $groups['ptdev']['issuers']['hbotauth']['token'] = $envs['ISSUER_DEV_HBOTAUTH'];
     $groups['ptdev']['issuers']['epi']['token'] = $envs['ISSUER_DEV_EPI'];
     $groups['ptdev']['issuers']['nlgov']['token'] = $envs['ISSUER_DEV_NLGOV'];
     $groups['ptdev']['issuers']['nbgov']['token'] = $envs['ISSUER_DEV_NBGOV'];
@@ -21,9 +24,12 @@ function setTokens($groups) {
     $groups['ptdev']['issuers']['sandboxver']['token'] = $envs['VERIFIER_DEV_SANDBOX'];
 
     $groups['pttest']['issuers']['mbob']['token'] = $envs['ISSUER_TEST_MBOB'];
+    $groups['pttest']['issuers']['mbobauth']['token'] = $envs['ISSUER_TEST_MBOBAUTH'];
     $groups['pttest']['issuers']['tun']['token'] = $envs['ISSUER_TEST_TUN'];
     $groups['pttest']['issuers']['uvh']['token'] = $envs['ISSUER_TEST_UVH'];
+    $groups['pttest']['issuers']['uvhauth']['token'] = $envs['ISSUER_TEST_UVHAUTH'];
     $groups['pttest']['issuers']['hbot']['token'] = $envs['ISSUER_TEST_HBOT'];
+    $groups['pttest']['issuers']['hbotauth']['token'] = $envs['ISSUER_TEST_HBOTAUTH'];
     $groups['pttest']['issuers']['epi']['token'] = $envs['ISSUER_TEST_EPI'];
     $groups['pttest']['issuers']['nlgov']['token'] = $envs['ISSUER_TEST_NLGOV'];
     $groups['pttest']['issuers']['nbgov']['token'] = $envs['ISSUER_TEST_NBGOV'];
@@ -31,9 +37,12 @@ function setTokens($groups) {
     $groups['pttest']['issuers']['sandboxver']['token'] = $envs['VERIFIER_TEST_SANDBOX'];
 
     $groups['ptstage']['issuers']['mbob']['token'] = $envs['ISSUER_STAGE_MBOB'];
+    $groups['ptstage']['issuers']['mbobauth']['token'] = $envs['ISSUER_STAGE_MBOBAUTH'];
     $groups['ptstage']['issuers']['tun']['token'] = $envs['ISSUER_STAGE_TUN'];
     $groups['ptstage']['issuers']['uvh']['token'] = $envs['ISSUER_STAGE_UVH'];
+    $groups['ptstage']['issuers']['uvhauth']['token'] = $envs['ISSUER_STAGE_UVHAUTH'];
     $groups['ptstage']['issuers']['hbot']['token'] = $envs['ISSUER_STAGE_HBOT'];
+    $groups['ptstage']['issuers']['hbotauth']['token'] = $envs['ISSUER_STAGE_HBOTAUTH'];
     $groups['ptstage']['issuers']['epi']['token'] = $envs['ISSUER_STAGE_EPI'];
     $groups['ptstage']['issuers']['nlgov']['token'] = $envs['ISSUER_STAGE_NLGOV'];
     $groups['ptstage']['issuers']['nbgov']['token'] = $envs['ISSUER_STAGE_NBGOV'];
@@ -41,9 +50,12 @@ function setTokens($groups) {
     $groups['ptstage']['issuers']['sandboxver']['token'] = $envs['VERIFIER_STAGE_SANDBOX'];
 
     $groups['ptprod']['issuers']['mbob']['token'] = $envs['ISSUER_PROD_MBOB'];
+    $groups['ptprod']['issuers']['mbobauth']['token'] = $envs['ISSUER_PROD_MBOBAUTH'];
     $groups['ptprod']['issuers']['tun']['token'] = $envs['ISSUER_PROD_TUN'];
     $groups['ptprod']['issuers']['uvh']['token'] = $envs['ISSUER_PROD_UVH'];
+    $groups['ptprod']['issuers']['uvhauth']['token'] = $envs['ISSUER_PROD_UVHAUTH'];
     $groups['ptprod']['issuers']['hbot']['token'] = $envs['ISSUER_PROD_HBOT'];
+    $groups['ptprod']['issuers']['hbotauth']['token'] = $envs['ISSUER_PROD_HBOTAUTH'];
     $groups['ptprod']['issuers']['epi']['token'] = $envs['ISSUER_PROD_EPI'];
     $groups['ptprod']['issuers']['nlgov']['token'] = $envs['ISSUER_PROD_NLGOV'];
     $groups['ptprod']['issuers']['nbgov']['token'] = $envs['ISSUER_PROD_NBGOV'];

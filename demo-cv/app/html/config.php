@@ -335,25 +335,46 @@ $entitlement = [
 
 $proeftuin = [
     "mbob" => [
-        "name" => "MBO Beek",
+        "name" => "MBO Beek (pre-auth)",
         "short" => "mbob",
         "type" => "issuer",
         "tool" => "agent",
-        "credentials" => [$aec, $sc, $scc, $sdc, $eec, $obc, $icc]
+        "credentials" => [$aec, $sc, $scc, $sdc, $eec, $obc]
+    ],
+    "mbobauth" => [
+        "name" => "MBO Beek (auth flow)",
+        "short" => "mbob",
+        "type" => "issuer",
+        "tool" => "agent",
+        "credentials" => [$icc]
     ],
     "uvh" => [
-        "name" => "Universiteit van Harderwijk",
+        "name" => "Universiteit van Harderwijk (pre-auth)",
         "short" => "uvh",
         "type" => "issuer",
         "tool" => "agent",
-        "credentials" => [$aec, $sc, $scc, $sdc, $eec, $obc, $icc]
+        "credentials" => [$aec, $sc, $scc, $sdc, $eec, $obc]
+    ],
+    "uvhauth" => [
+        "name" => "Universiteit van Harderwijk (auth flow)",
+        "short" => "uvhauth",
+        "type" => "issuer",
+        "tool" => "agent",
+        "credentials" => [$icc]
     ],
     "hbot" => [
-        "name" => "HBO Texel",
+        "name" => "HBO Texel (pre-auth)",
         "short" => "hbot",
         "type" => "issuer",
         "tool" => "agent",
-        "credentials" => [$aec, $sc, $scc, $sdc, $eec, $obc, $icc]
+        "credentials" => [$aec, $sc, $scc, $sdc, $eec, $obc]
+    ],
+    "hbotauth" => [
+        "name" => "HBO Texel (auth flow)",
+        "short" => "hbotauth",
+        "type" => "issuer",
+        "tool" => "agent",
+        "credentials" => [$icc]
     ],
     "tun" => [
         "name" => "Theed University of Naboo",
