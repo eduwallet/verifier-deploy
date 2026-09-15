@@ -111,6 +111,7 @@ switch ($_POST['action']) {
             curl_setopt($ch, CURLOPT_URL, "https://" . $baseurl . '/api/create-offer');
         }
         else {
+            $baseurl = $issuer['tool'] . '.' . $group['url'] . '/' . $issuer['short'];
             error_log("this is a verifier at https://$baseurl/api/create-offer/" . $cred['presentation']);
             curl_setopt($ch, CURLOPT_POSTFIELDS, [
                 // empty data set for now
