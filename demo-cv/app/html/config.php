@@ -425,7 +425,7 @@ $proeftuin = [
         "short" => "sandbox",
         "type" => "verifier",
         "tool" => "verifier",
-        "credentials" => [$abc, $aec, $sc, $scc, $sdc, $eec, $obc, $pid, $eduid,
+        "credentials" => [$icc, $aec, $sc, $scc, $sdc, $eec, $obc, $pid, $eduid,
             ["name" => "Generic Credential (VCDM)", "short" => "gc", "presentation" => "GC"],
             ["name" => "Generic Credential (LDP)", "short" => "gcld", "presentation" => "GCLDP"]
         ]
