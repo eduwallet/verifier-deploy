@@ -185,7 +185,7 @@ $scc = [
     "flow" => "preauth",
     "data" => [
         "name" => "Pietje Puk",
-        "email" =>"pietje@example.com",
+        "email" => "pietje@example.com",
         "institution" => "Universiteit van Harderwijk",
         "student_number" => "A12302991"
     ]
@@ -201,7 +201,7 @@ $icc = [
         "name" => "Pietje Puk",
         "given_name" => "Pietje",
         "family_name" => "Puk",
-        "email" =>"pietje@example.com",
+        "email" => "pietje@example.com",
         "institution" => "Universiteit van Harderwijk",
         "affiliations" => "student,ta",
         "portrait" => "data:image/jpeg;base64,blablabla"
