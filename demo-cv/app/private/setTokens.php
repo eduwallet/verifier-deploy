@@ -62,22 +62,5 @@ function setTokens($groups) {
     $groups['ptprod']['issuers']['sandbox']['token'] = $envs['ISSUER_PROD_SANDBOX'];
     $groups['ptprod']['issuers']['sandboxver']['token'] = $envs['VERIFIER_PROD_SANDBOX'];
 
-    $groups['pdev']['issuers']['eduid']['token'] = $envs['ISSUER_DEV_EDUID'];
-    $groups['pdev']['issuers']['eduidver']['token'] = $envs['VERIFIER_DEV_EDUID'];
-
-    $groups['ptest']['issuers']['eduid']['token'] = $envs['ISSUER_TEST_EDUID'];
-    $groups['ptest']['issuers']['eduidver']['token'] = $envs['VERIFIER_TEST_EDUID'];
-
-    $groups['pstage']['issuers']['eduid']['token'] = $envs['ISSUER_STAGE_EDUID'];
-    $groups['pstage']['issuers']['eduidver']['token'] = $envs['VERIFIER_STAGE_EDUID'];
-
-    $groups['pprod']['issuers']['eduid']['token'] = $envs['ISSUER_PROD_EDUID'];
-    $groups['pprod']['issuers']['eduidver']['token'] = $envs['VERIFIER_PROD_EDUID'];
-
-    $groups['edev']['issuers']['edubadges']['token'] = $envs['ISSUER_DEV_EDUBADGES'];
-    $groups['etest']['issuers']['edubadges']['token'] = $envs['ISSUER_TEST_EDUBADGES'];
-    $groups['estage']['issuers']['edubadges']['token'] = $envs['ISSUER_STAGE_EDUBADGES'];
-    $groups['eprod']['issuers']['edubadges']['token'] = $envs['ISSUER_PROD_EDUBADGES'];
-
     return $groups;
 }
