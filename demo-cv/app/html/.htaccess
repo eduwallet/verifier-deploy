@@ -1,14 +1,17 @@
-# Deny everything by default; only explicitly allowed file types below are served.
-Require all denied
+# Serve index.php when no explicit file is requested.
+DirectoryIndex index.php
 
-# Static assets used by the front-end page.
-<FilesMatch "\.(css|js|png|jpg|jpeg|gif|svg|ico|webp|woff|woff2)$">
-    Require all granted
+# Deny any file whose name doesn't end in one of the allowed extensions
+# below. This only matches actual filenames, so it doesn't interfere with
+# directory requests being resolved to DirectoryIndex (unlike a blanket
+# "Require all denied" at the top of this file, which also blocks the
+# directory-level lookup Apache does before applying DirectoryIndex).
+<FilesMatch "^(?!.*\.(php|css|js|png|jpe?g|gif|svg|ico|webp|woff2?)$).+$">
+    Require all denied
 </FilesMatch>
 
 # PHP files must always be executed by the PHP interpreter, never served as
 # plain text (e.g. if the php module were ever disabled).
 <FilesMatch "\.php$">
     SetHandler application/x-httpd-php
-    Require all granted
 </FilesMatch>
