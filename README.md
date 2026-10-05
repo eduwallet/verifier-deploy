@@ -30,13 +30,17 @@ cd ../..
 
 Please note that this creates files and directories in the app directory owned by the container root user.
 
-Copy the `.env.example` file to `.env` and adjust the parameters as required.
+Copy the `.env.example` file to `demo-cv/app/private/.env` and adjust the parameters as required.
 
-Finally, run the container in the app folder:
+The `demo-cv/app/html` directory is the Apache docroot. The `.env`, `config.php` and `setTokens.php`
+files live in `demo-cv/app/private`, which sits outside the docroot and is mounted into the
+container separately so it can never be served directly.
+
+Finally, run the container using docker compose:
 
 ```bash
-cd demo-cv/app
-docker run -v .:/var/www/html -p 8080:80 eduwallet_verifier-democv
+cd demo-cv/docker
+docker compose -p eduwallet_verifier up -d
 ```
 
 The application can now be accessed at `http://localhost:8080`

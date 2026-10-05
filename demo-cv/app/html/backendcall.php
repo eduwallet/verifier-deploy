@@ -8,8 +8,8 @@ $state = [
 ];
 $states = $_SESSION['states'] ?? [];
 
-include('config.php');
-include('setTokens.php');
+include(__DIR__ . '/../private/config.php');
+include(__DIR__ . '/../private/setTokens.php');
 $groups = setTokens($groups);
 
 $token = $_POST['token'] ?? ($_GET['token'] ?? '');

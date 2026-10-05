@@ -4,7 +4,7 @@ session_start();
 $adminToken = $_SESSION['token'] ?? uniqid();
 $_SESSION['token'] = $adminToken;
 
-include('config.php');
+include(__DIR__ . '/../private/config.php');
 
 ?>
 <!doctype html>

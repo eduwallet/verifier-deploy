@@ -1,0 +1,4 @@
+# Defense in depth: this directory must never be served directly. It lives
+# outside the Apache docroot, but deny everything here too in case it is
+# ever mounted or aliased incorrectly.
+Require all denied

@@ -12,6 +12,7 @@ services:
       - 8080:80
     volumes:
       - ../app/html:/var/www/html
+      - ../app/private:/var/www/private
     networks:
       - eduwallet_verifiers
 

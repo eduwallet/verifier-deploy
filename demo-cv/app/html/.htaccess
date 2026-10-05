@@ -1,0 +1,14 @@
+# Deny everything by default; only explicitly allowed file types below are served.
+Require all denied
+
+# Static assets used by the front-end page.
+<FilesMatch "\.(css|js|png|jpg|jpeg|gif|svg|ico|webp|woff|woff2)$">
+    Require all granted
+</FilesMatch>
+
+# PHP files must always be executed by the PHP interpreter, never served as
+# plain text (e.g. if the php module were ever disabled).
+<FilesMatch "\.php$">
+    SetHandler application/x-httpd-php
+    Require all granted
+</FilesMatch>
