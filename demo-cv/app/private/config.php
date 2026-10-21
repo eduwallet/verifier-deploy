@@ -485,7 +485,7 @@ $groups = [
         "name" => "Proeftuin Productie",
         "env" => "prod",
         "issuers" => $proeftuin,
-        "url" => "eduwallet.nl",
+        "url" => "playground.eduwallet.nl",
         "tenantDomain" => true
     ],
 ];
