@@ -1,0 +1,4 @@
+# the SPA build output in the Apache docroot (index.php and .htaccess are tracked)
+app/html/assets/
+app/html/index.html
+frontend/node_modules/

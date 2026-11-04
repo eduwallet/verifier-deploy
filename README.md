@@ -45,3 +45,41 @@ docker compose -p eduwallet_verifier up -d
 
 The application can now be accessed at `http://localhost:8080`
 
+## Demo
+
+The Demo application (`demo/`) demonstrates complete credential flows against the live development issuers. It has a PHP back-end (`demo/app`) that holds the API tokens and talks to the issuer, and a Vue 3 + PrimeVue front-end (`demo/frontend`) that only talks to the back-end. See `demo/PLAN.md` for the design and the planned flows.
+
+### Back-end
+
+Install the dependencies and run the tests (PHP 8.2 and composer):
+
+```bash
+cd demo/app
+composer install
+vendor/bin/phpunit
+```
+
+Copy `demo/app/private/.env.example` to `demo/app/private/.env` and set at least `ISSUER_DEV_SANDBOX`. The `private` directory, `src` and `vendor` live outside the Apache docroot `demo/app/html`.
+
+To run it locally, start the container (port 8081):
+
+```bash
+cd demo/docker
+docker compose up -d --build
+```
+
+On `poc5` the container is created by the Ansible deployment.
+
+### Front-end
+
+Node 20 or later is needed to build the front-end. The build goes into the Apache docroot `demo/app/html`, next to `index.php`:
+
+```bash
+cd demo/frontend
+npm ci
+npm test            # unit and component tests
+npm run build       # type check and build into ../app/html
+```
+
+For development, run the back-end container (port 8081) and then `npm run dev`: the Vite dev server proxies `/api` to it.
+

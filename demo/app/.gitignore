@@ -1,0 +1,6 @@
+.env
+vendor
+node_modules
+composer.phar
+composer-setup.php
+.phpunit.result.cache

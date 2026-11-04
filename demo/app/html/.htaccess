@@ -1,0 +1,16 @@
+DirectoryIndex index.html index.php
+
+RewriteEngine On
+
+# The API is handled by the front controller
+RewriteRule ^api(/.*)?$ index.php [L]
+
+# Deny any file whose name doesn't end in one of the allowed extensions below.
+<FilesMatch "^(?!.*\.(php|html|css|js|map|png|jpe?g|gif|svg|ico|webp|woff2?)$).+$">
+    Require all denied
+</FilesMatch>
+
+# PHP files must always be executed by the PHP interpreter, never served as plain text.
+<FilesMatch "\.php$">
+    SetHandler application/x-httpd-php
+</FilesMatch>
