@@ -114,6 +114,7 @@ describe('useDeferredFlow', () => {
     await vi.advanceTimersByTimeAsync(1_000);
     expect(mocked.status.mock.calls.length).toBe(polls + 1);
 
+    expect(flow.step).toBe(6);
     expect(flow.timeline.map((e) => e.title)).toContain('Wallet collected the credential');
     scope.stop();
   });
@@ -136,7 +137,7 @@ describe('useDeferredFlow', () => {
     const polls = mocked.status.mock.calls.length;
     await vi.advanceTimersByTimeAsync(30_000);
     expect(mocked.status.mock.calls.length).toBe(polls);
-    expect(flow.step).toBe(5);
+    expect(flow.step).toBe(6);
     scope.stop();
   });
 

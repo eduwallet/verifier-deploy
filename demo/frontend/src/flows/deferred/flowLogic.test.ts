@@ -4,7 +4,7 @@ import { phaseSeverity, pollDelayMs, stepForPhase, suppliedClaimNames } from './
 describe('stepForPhase', () => {
   it.each([
     [null, 1], ['created', 2], ['retrieved', 2], ['token', 3], ['processing', 3],
-    ['pending', 4], ['ready', 5], ['issued', 5], ['denied', 5],
+    ['pending', 4], ['ready', 5], ['issued', 6], ['denied', 6],
   ] as const)('maps %s to step %i', (phase, step) => {
     expect(stepForPhase(phase)).toBe(step);
   });

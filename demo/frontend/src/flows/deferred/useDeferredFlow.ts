@@ -58,7 +58,7 @@ export function useDeferredFlow() {
   const notification = computed(() => (hasContent(status.value?.notification) ? status.value?.notification : null));
 
   watch([phase, authorized], () => {
-    const reached = authorized.value ? 5 : stepForPhase(phase.value);
+    const reached = Math.max(authorized.value ? 5 : 0, stepForPhase(phase.value));
     if (reached > highest.value) {
       highest.value = reached as Step;
     }

@@ -6,7 +6,6 @@ import AccordionHeader from 'primevue/accordionheader';
 import AccordionContent from 'primevue/accordioncontent';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
-import ProgressSpinner from 'primevue/progressspinner';
 import JsonPanel from '@/components/JsonPanel.vue';
 import StatusTag from '@/components/StatusTag.vue';
 import { formatAgo, formatDateTime } from '@/utils/format';
@@ -20,7 +19,7 @@ const interval = computed(() => (props.flow.pollIntervalMs ? props.flow.pollInte
 
 <template>
   <section class="step">
-    <h2>Issuance</h2>
+    <h2>Completed</h2>
 
     <Message v-if="flow.phase === 'issued'" severity="success" :closable="false">
       <b>The wallet collected the credential.</b> The issuance is complete.
@@ -32,13 +31,6 @@ const interval = computed(() => (props.flow.pollIntervalMs ? props.flow.pollInte
     <Message v-else-if="flow.phase === 'expired'" severity="warn" :closable="false">
       <b>The transaction has expired</b> before the wallet collected the credential.
     </Message>
-    <div v-else class="waiting">
-      <ProgressSpinner style="width: 2rem; height: 2rem" stroke-width="6" />
-      <span>
-        The credential is released. The wallet collects it the next time it polls the deferred endpoint
-        (the issuer asked for an interval of {{ flow.deferred?.own?.interval ?? '?' }} s).
-      </span>
-    </div>
 
     <dl class="facts">
       <dt>Status</dt><dd><StatusTag :phase="flow.phase" :status="flow.status?.status" /></dd>
@@ -76,7 +68,6 @@ const interval = computed(() => (props.flow.pollIntervalMs ? props.flow.pollInte
 </template>
 
 <style scoped>
-.waiting { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
 .facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: .5rem 1.5rem; margin: 1rem 0; }
 .facts dt { font-weight: 600; }
 .facts dd { margin: 0; }

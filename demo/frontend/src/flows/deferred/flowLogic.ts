@@ -1,19 +1,21 @@
 import type { Phase } from '@/api/types';
 
-export type Step = 1 | 2 | 3 | 4 | 5;
+export type Step = 1 | 2 | 3 | 4 | 5 | 6;
 
 export const STEPS: { step: Step; title: string }[] = [
   { step: 1, title: 'Prepare' },
   { step: 2, title: 'Offer' },
   { step: 3, title: 'Wallet request' },
   { step: 4, title: 'Back-office' },
-  { step: 5, title: 'Issued' },
+  { step: 5, title: 'Collection' },
+  { step: 6, title: 'Completed' },
 ];
 
 /**
  * The wizard step that belongs to the latest known phase of the offer. `null` is: no offer yet.
  * Step 2 lasts until the offer is no longer 'created' or 'retrieved' (the wallet accepted),
- * step 3 until the wallet's credential request is pending.
+ * step 3 until the wallet's credential request is pending, step 5 until the wallet has collected
+ * the released credential (or it was denied).
  */
 export function stepForPhase(phase: Phase | null): Step {
   switch (phase) {
@@ -23,9 +25,9 @@ export function stepForPhase(phase: Phase | null): Step {
     case 'token':
     case 'processing': return 3;
     case 'pending': return 4;
-    case 'ready':
+    case 'ready': return 5;
     case 'denied':
-    case 'issued': return 5;
+    case 'issued': return 6;
     default: return 2; // 'expired' and 'error' keep the step the visitor is in
   }
 }

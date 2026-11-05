@@ -16,6 +16,7 @@ import { api } from '@/api/client';
 import DeferredFlow from './DeferredFlow.vue';
 import StepBackoffice from './StepBackoffice.vue';
 import StepOffer from './StepOffer.vue';
+import StepCollect from './StepCollect.vue';
 import StepResult from './StepResult.vue';
 import StepWallet from './StepWallet.vue';
 import DebugPanels from '@/components/DebugPanels.vue';
@@ -72,11 +73,11 @@ describe('DeferredFlow', () => {
     });
   });
 
-  it('shows the five numbered steps and the prefilled form with a big Issue button', async () => {
+  it('shows the six numbered steps and the prefilled form with a big Issue button', async () => {
     const wrapper = mount(DeferredFlow, { global });
     await flushPromises();
     const text = wrapper.text();
-    for (const title of ['Prepare', 'Offer', 'Wallet request', 'Back-office', 'Issued']) {
+    for (const title of ['Prepare', 'Offer', 'Wallet request', 'Back-office', 'Collection', 'Completed']) {
       expect(text).toContain(title);
     }
     const inputs = wrapper.findAll('input[type="text"]').map((i) => (i.element as HTMLInputElement).value);
@@ -135,6 +136,13 @@ describe('step components', () => {
     expect(authorize.classes()).toContain('p-button-lg');
     await authorize.trigger('click');
     expect(flow.authorize).toHaveBeenCalled();
+  });
+
+  it('renders the collection step while the wallet has not yet collected the credential', () => {
+    const flow = fakeFlow({ phase: 'ready' });
+    const wrapper = mount(StepCollect, { props: { flow }, global });
+    expect(wrapper.text()).toContain('ready for issuance');
+    expect(wrapper.text()).not.toContain('The wallet collected the credential');
   });
 
   it('renders the result step for an issued credential with the notification', () => {

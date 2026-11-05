@@ -5,8 +5,9 @@ RewriteEngine On
 # The API is handled by the front controller
 RewriteRule ^api(/.*)?$ index.php [L]
 
+# (the name "api" is the virtual API path, which the rewrite above sends to index.php)
 # Deny any file whose name doesn't end in one of the allowed extensions below.
-<FilesMatch "^(?!.*\.(php|html|css|js|map|png|jpe?g|gif|svg|ico|webp|woff2?)$).+$">
+<FilesMatch "^(?!api$|.*\.(php|html|css|js|map|png|jpe?g|gif|svg|ico|webp|woff2?)$).+$">
     Require all denied
 </FilesMatch>
 

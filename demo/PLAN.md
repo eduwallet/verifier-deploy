@@ -5,7 +5,7 @@ Status: **in progress**. Flow 0 (deferred credential) is built end to end:
 - **Back-end** (`app/`): router, session/CSRF/rate limiting, upstream client with redacted trace,
   issuer service (`create-offer`, `check-offer`, offer fetch, deferred list/detail/authorize/deny),
   `private/catalog.php`, PHPUnit tests.
-- **Front-end** (`frontend/`): Vue 3 + Vite + TypeScript + PrimeVue, hash router, five-step wizard for
+- **Front-end** (`frontend/`): Vue 3 + Vite + TypeScript + PrimeVue, hash router, six-step wizard for
   flow 0 (`src/flows/deferred/`), debug panels (timeline, back-end <-> issuer exchanges, session state),
   Vitest tests. Walked through in a headless browser against a fake issuer.
 
@@ -230,7 +230,8 @@ Checked against `veramo-agent` (README and `src`), not assumed:
 | 2 | **Offer** | offer URI (copyable + same-device deeplink), QR code, offer JSON in a `<pre>` (fetched by the back-end), live status; hint to accept in the wallet once `OFFER_URI_RETRIEVED` | `GET /api/session/{id}/offer`, polling `GET /api/session/{id}` (issuer `check-offer`) every 1 s | status is not `OFFER_CREATED`/`OFFER_URI_RETRIEVED` |
 | 3 | **Wallet request** | explanation that the wallet has accepted, got a token, requests the credential and receives `202`; shows the `access_token-*` and `get_credential-*` exchanges | polling as above | `CREDENTIAL_PENDING` |
 | 4 | **Back-office** | table of open deferred transactions (own row highlighted), detail card of the own transaction (id, ttl, interval, expiry, credential configuration, claim definitions, data known), claim inputs, large **Authorize** button (and a smaller **Deny**) | `GET /api/session/{id}/deferred`, `POST .../authorize` -> issuer `POST /api/v2/deferred/:id` | authorize returned `200` |
-| 5 | **Issued** | status, ordered `requests` as JSON, notification if present, final result | polling every 1 s; every 10 s once `CREDENTIAL_ISSUED` | n/a: stops on expiry, deny, leaving the page |
+| 5 | **Collection** | the credential is ready for issuance; waiting for the wallet's next deferred poll (spinner, status, last `deferred-request`) | polling every 1 s | `CREDENTIAL_ISSUED` (or `CREDENTIAL_DENIED`) |
+| 6 | **Completed** | final status, notification if present, ordered `requests` as JSON | polling every 10 s once `CREDENTIAL_ISSUED` | n/a: stops on expiry, deny, leaving the page |
 
 Step 4 table (open transactions): columns are **short id** (first 8 chars, full id in a
 tooltip), **credential** (display name), **status**, **created** and **expires** (relative, such as
@@ -349,8 +350,25 @@ page shows technical detail next to the user-facing steps, as PrimeVue panels
     step, flagged e.g. `hasFrontend`, runs `node:<lts> npm ci && npm run build` on `frontend/` with output in
     `app/html`. The server needs Node only inside that one-off container, never at runtime.
     This needs a small change to the `post_config` role (`installtasks.yml`), made in the
-    `agent/ansible` repository.
+    `agent/ansible` repository. **Prepared, not yet committed or run** (see below).
   - `hasComposer: true` for the PHP dependencies, same as the existing flow (`composer.json` in `app/`).
+- **Prepared changes in `agent/ansible`** (uncommitted, syntax-checked and rendered with stub values,
+  never run against poc5):
+  - `group_vars/eduwallet/35-verifierdeploy.yml`: installation `demo` (port 8002,
+    domain `demo.{{ deploydomain }}`, `hasComposer`, `composerArgs: "--no-dev --optimize-autoloader"`,
+    `hasFrontend`, template `env.demo.j2` -> `app/private/.env`).
+  - `roles/post_config/tasks/installtasks.yml`: composer arguments from `composerArgs`, and a new
+    "Build the front-end" task that runs `npm ci && npm run build` in a one-off `node:22-alpine`
+    container (`nodeImage` can override it) when `hasFrontend` is defined. Both are opt-in, so
+    `demo-cv` is unchanged.
+  - `roles/post_config/templates/env.demo.j2`: the sandbox admin token from the vault
+    (`tokens.sandbox.admin`), the issuer URL from `basedomain`, the cookie `Secure` flag from the
+    Traefik setting.
+  - The image is built from `demo/docker/docker-compose.yml` (service name `demo` must equal the
+    installation name, so that the image is `eduwallet_agent-demo`); the container itself comes from
+    the generated compose file.
+  - `sources.verifierdeploy.version` is `HEAD` of `github.com/eduwallet/verifier-deploy`: the demo
+    must be pushed there (default branch) before the deployment can find it.
 - **Traefik**: `traefik.enabled` makes the template add `traefik.http.routers.demo...rule=Host(...)`
   labels, with TLS (`websecure`, Let's Encrypt resolver) terminated at Traefik. The container
   itself only speaks plain HTTP on port 80 (published locally as 8002). Consequences for the PHP
@@ -420,4 +438,4 @@ Each milestone should be independently runnable and reviewable.
 4. `post_config` needs a frontend build step (`hasFrontend`) and the `verifierdeploy.installations`
    entry must be added in `agent/ansible`; DNS for `demo.dev.eduwallet.nl` must exist.
 5. Does the notification endpoint get called by Paradym or Siros ID for deferred credentials? Not a
-   blocker: the step 5 panel shows `notification-request` when present.
+   blocker: the step 6 panel shows `notification-request` when present.

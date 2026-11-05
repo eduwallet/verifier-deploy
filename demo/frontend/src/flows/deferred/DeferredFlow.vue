@@ -9,6 +9,7 @@ import Stepper from 'primevue/stepper';
 import DebugPanels from '@/components/DebugPanels.vue';
 import { showDetails } from '@/utils/settings';
 import { STEPS } from './flowLogic';
+import StepCollect from './StepCollect.vue';
 import StepBackoffice from './StepBackoffice.vue';
 import StepOffer from './StepOffer.vue';
 import StepPrepare from './StepPrepare.vue';
@@ -40,7 +41,8 @@ onMounted(() => flow.init());
           <StepPanel :value="2"><StepOffer :flow="flow" /></StepPanel>
           <StepPanel :value="3"><StepWallet :flow="flow" /></StepPanel>
           <StepPanel :value="4"><StepBackoffice :flow="flow" /></StepPanel>
-          <StepPanel :value="5"><StepResult :flow="flow" /></StepPanel>
+          <StepPanel :value="5"><StepCollect :flow="flow" /></StepPanel>
+          <StepPanel :value="6"><StepResult :flow="flow" /></StepPanel>
         </StepPanels>
       </Stepper>
     </div>
