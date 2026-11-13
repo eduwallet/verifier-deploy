@@ -37,11 +37,19 @@ export interface CatalogCredential {
   fields: CatalogField[];
 }
 
+export interface CatalogBundle {
+  title: string;
+  issuer: string;
+  /** the catalog keys of the credentials, in the order of the offer */
+  credentials: string[];
+}
+
 export interface Catalog {
   csrfToken: string;
   environment: string;
   issuers: Record<string, { name: string; configured: boolean }>;
   credentials: Record<string, CatalogCredential>;
+  bundles: Record<string, CatalogBundle>;
 }
 
 export interface IssueResponse extends Traced {
@@ -50,6 +58,33 @@ export interface IssueResponse extends Traced {
   offerUri: string;
   txCode: string | null;
   data: Record<string, string>;
+}
+
+/** A credential of an offer that the issuer issued */
+export interface IssuedItem {
+  /** the catalog key of the credential */
+  key: string;
+  uuid: string;
+}
+
+/** A deferred transaction of an offer */
+export interface TransactionItem {
+  id: string;
+  /** the catalog key of the credential */
+  key: string;
+  status: string;
+  expiresAt: number | null;
+  reason: string | null;
+}
+
+export interface IssueMultipleResponse extends Omit<IssueResponse, 'data'> {
+  data: Record<string, Record<string, string>>;
+}
+
+export interface ReleaseResponse extends Traced {
+  released: boolean;
+  claims: Record<string, string>;
+  result: unknown;
 }
 
 export interface StatusResponse extends Traced {
@@ -61,6 +96,8 @@ export interface StatusResponse extends Traced {
   expiresAt: number | null;
   reason: string | null;
   credentialUuid: string | null;
+  issued: IssuedItem[];
+  deferred: TransactionItem[];
   /** request/response data per protocol phase, in protocol order */
   requests: Record<string, unknown>;
   notification: unknown;

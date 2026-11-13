@@ -1,6 +1,6 @@
 import type {
   AuthorizeResponse, Catalog, DeferredListResponse, DenyResponse,
-  IssueResponse, OfferResponse, StatusResponse, TraceEntry,
+  IssueMultipleResponse, IssueResponse, OfferResponse, ReleaseResponse, StatusResponse, TraceEntry,
 } from './types';
 
 export class ApiError extends Error {
@@ -76,6 +76,12 @@ export const api = {
   },
   issue(credential: string, data: Record<string, string>) {
     return request<IssueResponse>('POST', '/issue', { credential, data });
+  },
+  issueMultiple(bundle: string, data: Record<string, Record<string, string>>) {
+    return request<IssueMultipleResponse>('POST', '/issue-multiple', { bundle, data });
+  },
+  release(run: string) {
+    return request<ReleaseResponse>('POST', `/session/${run}/release`, {});
   },
   status(run: string, trace = false) {
     return request<StatusResponse>('GET', `/session/${run}${trace ? '?trace=1' : ''}`);

@@ -22,6 +22,18 @@ import Card from 'primevue/card';
           <router-link to="/deferred"><Button label="Start" icon="pi pi-arrow-right" icon-pos="right" as="span" /></router-link>
         </template>
       </Card>
+      <Card>
+        <template #title>Multiple credentials</template>
+        <template #content>
+          <p>
+            Issue two generic credentials and one deferred credential with a single credential offer. The generic
+            credentials arrive at once, the deferred one is released by the back-office afterwards.
+          </p>
+        </template>
+        <template #footer>
+          <router-link to="/multiple"><Button label="Start" icon="pi pi-arrow-right" icon-pos="right" as="span" /></router-link>
+        </template>
+      </Card>
     </div>
   </div>
 </template>

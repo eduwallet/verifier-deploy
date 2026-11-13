@@ -64,7 +64,7 @@ describe('DeferredFlow', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocked.catalog.mockResolvedValue({
-      csrfToken: 't', environment: 'dev', issuers: { sandbox: { name: 'Sandbox', configured: true } },
+      csrfToken: 't', environment: 'dev', bundles: {}, issuers: { sandbox: { name: 'Sandbox', configured: true } },
       credentials: { deferred: { title: 'Deferred credential', issuer: 'sandbox', deferred: true, fields: [
         { name: 'name', label: 'Name', default: 'Demo User', maxLength: 100 },
         { name: 'email', label: 'Email', default: 'demouser@example.com', maxLength: 100 },
@@ -89,7 +89,7 @@ describe('DeferredFlow', () => {
 
   it('creates the offer when Issue is clicked', async () => {
     mocked.issue.mockResolvedValue({ run: 'r1', offerId: 'o', offerUri: 'openid-credential-offer://?x', txCode: null, data: {} });
-    mocked.status.mockResolvedValue({ run: 'r1', status: 'OFFER_CREATED', phase: 'created', createdAt: 1, lastUpdatedAt: 1, expiresAt: null, reason: null, credentialUuid: null, requests: {}, notification: null });
+    mocked.status.mockResolvedValue({ run: 'r1', status: 'OFFER_CREATED', phase: 'created', createdAt: 1, lastUpdatedAt: 1, expiresAt: null, reason: null, credentialUuid: null, issued: [], deferred: [], requests: {}, notification: null });
     mocked.offer.mockResolvedValue({ offerUri: 'x', offer: { credential_issuer: 'https://issuer.test' } });
     const wrapper = mount(DeferredFlow, { global });
     await flushPromises();

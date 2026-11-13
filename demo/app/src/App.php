@@ -39,6 +39,8 @@ final class App
         $r = $this->router;
         $r->add('GET', '/api/catalog', fn($req) => $this->catalog());
         $r->add('POST', '/api/issue', fn($req) => $this->issue($req));
+        $r->add('POST', '/api/issue-multiple', fn($req) => $this->issueMultiple($req));
+        $r->add('POST', '/api/session/{run}/release', fn($req, $p) => $this->release($p['run']));
         $r->add('GET', '/api/session/{run}', fn($req, $p) => $this->status($req, $p['run']));
         $r->add('GET', '/api/session/{run}/offer', fn($req, $p) => $this->offer($p['run']));
         $r->add('GET', '/api/session/{run}/deferred', fn($req, $p) => $this->deferred($p['run']));
@@ -99,13 +101,124 @@ final class App
         ]);
     }
 
+    /** Issue the credentials of a bundle with one offer. The data is keyed by the catalog key of the credential. */
+    private function issueMultiple(Request $request): Response
+    {
+        $body = $request->json();
+        $bundle = $this->config->bundle((string) ($body['bundle'] ?? ''));
+        $issuer = $this->config->issuer($bundle['issuer']);
+        $input = is_array($body['data'] ?? null) ? $body['data'] : [];
+        foreach (array_keys($input) as $key) {
+            if (!in_array($key, $bundle['credentials'], true)) {
+                throw new ApiException(422, 'unknown_credential', 'Unknown credential');
+            }
+        }
+
+        $items = [];
+        $data = [];
+        foreach ($bundle['credentials'] as $key) {
+            $credential = $this->config->credential($key);
+            $values = $this->validateClaims($credential, is_array($input[$key] ?? null) ? $input[$key] : [], true);
+            $items[] = ['credential' => $credential, 'data' => $values];
+            $data[$key] = $values;
+        }
+
+        $this->limiter->hit('issue', 10, 60);
+        $offer = $this->issuers->createMultipleOffer($issuer, $items);
+
+        $run = bin2hex(random_bytes(16));
+        $runs = $this->session->get('runs', []);
+        $runs[$run] = [
+            'bundle' => $bundle['key'],
+            'offerId' => $offer['id'],
+            'offerUri' => $offer['uri'],
+            'data' => $data,
+            'createdAt' => time(),
+        ];
+        $this->session->set('runs', array_slice($runs, -self::MAX_RUNS, null, true));
+        $this->session->close();
+
+        return $this->ok([
+            'run' => $run,
+            'offerId' => $offer['id'],
+            'offerUri' => $offer['uri'],
+            'txCode' => $offer['txCode'],
+            'data' => $data,
+        ]);
+    }
+
+    /**
+     * Release the deferred credential of a bundle run with the data that was offered, which is what the
+     * demo back-office does: it does not change anything.
+     */
+    private function release(string $runId): Response
+    {
+        [$run, $credential, $issuer] = $this->run($runId);
+        if (!isset($run['bundle'])) {
+            throw new ApiException(404, 'unknown_run', 'Unknown session');
+        }
+        $id = $this->transactionId($run, $credential, $issuer);
+        $detail = $this->issuers->deferredDetail($issuer, $id);
+
+        // the claims the issuer accepts from the back-office, with the values that were offered
+        $offered = $run['data'][$credential['key']] ?? [];
+        $names = IssuerService::suppliedClaimNames($detail['claims'] ?? []);
+        $claims = [];
+        foreach ($names ?: array_keys($credential['fields']) as $name) {
+            if (array_key_exists($name, $offered)) {
+                $claims[$name] = (string) $offered[$name];
+            }
+        }
+
+        $this->limiter->hit('authorize', 20, 60);
+        $this->session->close();
+        $result = $this->issuers->authorize($issuer, $id, $claims);
+        return $this->ok(['released' => true, 'claims' => $claims, 'result' => $result]);
+    }
+
     private function status(Request $request, string $runId): Response
     {
         [$run, , $issuer] = $this->run($runId);
         $this->session->close();
-        $status = $this->issuers->checkOffer($issuer, $run['offerId']);
+        $status = $this->withCredentialKeys($this->issuers->checkOffer($issuer, $run['offerId']), $run);
         // the poll runs every second, so the trace is only included when asked for
         return $this->ok(['run' => $runId] + $status, ($request->query['trace'] ?? '') === '1');
+    }
+
+    /**
+     * The issued credentials and deferred transactions of an offer, by catalog key of the credential: the front-end
+     * does not know the credential configurations of the issuer. Only the run of a bundle has them.
+     * @param array<string,mixed> $status
+     * @param array<string,mixed> $run
+     * @return array<string,mixed>
+     */
+    private function withCredentialKeys(array $status, array $run): array
+    {
+        $issued = [];
+        $deferred = [];
+        if (isset($run['bundle'])) {
+            $keys = $this->config->bundle($run['bundle'])['credentials'];
+            foreach ($status['issued'] as $item) {
+                // the data set is '<credential configuration id>#<position in the offer>'
+                if (!preg_match('/^(.+)#(\d+)$/', $item['dataset'], $match)) {
+                    continue;
+                }
+                $key = $keys[(int) $match[2]] ?? null;
+                if ($key !== null && $this->config->credential($key)['credentialId'] === $match[1]) {
+                    $issued[] = ['key' => $key, 'uuid' => $item['uuid']];
+                }
+            }
+            foreach ($status['deferred'] as $item) {
+                foreach ($keys as $key) {
+                    $credential = $this->config->credential($key);
+                    if (($credential['deferred'] ?? false) && $credential['credentialId'] === $item['credential']) {
+                        $deferred[] = ['id' => $item['id'], 'key' => $key] + array_diff_key($item, ['id' => 1, 'credential' => 1]);
+                        break;
+                    }
+                }
+            }
+        }
+        return ['issued' => $issued, 'deferred' => $deferred] + $status;
     }
 
     private function offer(string $run): Response
@@ -162,6 +275,17 @@ final class App
         $run = $this->session->get('runs', [])[$id] ?? null;
         if (!is_array($run) || !preg_match('/^[a-f0-9]{32}$/', $id)) {
             throw new ApiException(404, 'unknown_run', 'Unknown session');
+        }
+        if (isset($run['bundle'])) {
+            // the run of a bundle: its deferred credential is the one the back-office works on
+            $bundle = $this->config->bundle($run['bundle']);
+            foreach ($bundle['credentials'] as $key) {
+                $credential = $this->config->credential($key);
+                if ($credential['deferred'] ?? false) {
+                    return [$run, $credential, $this->config->issuer($bundle['issuer'])];
+                }
+            }
+            throw new ApiException(500, 'configuration_error', 'The bundle has no deferred credential');
         }
         $credential = $this->config->credential($run['credential']);
         return [$run, $credential, $this->config->issuer($credential['issuer'])];

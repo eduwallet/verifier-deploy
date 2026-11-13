@@ -12,6 +12,31 @@ return static function (array $env): array {
             ],
         ],
         'credentials' => [
+            // the two generic credentials of the 'multiple' demo
+            'generic1' => [
+                'title' => 'Generic credential 1',
+                'issuer' => 'sandbox',
+                'credentialId' => 'GenericCredential_JWT',
+                'grant' => 'preauth',
+                'deferred' => false,
+                'fields' => [
+                    'institute' => ['label' => 'Instituut', 'default' => 'Education Inc', 'maxLength' => 100],
+                    'credential' => ['label' => 'Credential', 'default' => 'Lessons Learned', 'maxLength' => 100],
+                    'grade' => ['label' => 'Grade', 'default' => 'B-', 'maxLength' => 100],
+                ],
+            ],
+            'generic2' => [
+                'title' => 'Generic credential 2',
+                'issuer' => 'sandbox',
+                'credentialId' => 'GenericCredential_JWT',
+                'grant' => 'preauth',
+                'deferred' => false,
+                'fields' => [
+                    'institute' => ['label' => 'Instituut', 'default' => 'Education Inc', 'maxLength' => 100],
+                    'credential' => ['label' => 'Credential', 'default' => 'Digital Knowledge', 'maxLength' => 100],
+                    'grade' => ['label' => 'Grade', 'default' => 'A+', 'maxLength' => 100],
+                ],
+            ],
             'deferred' => [
                 'title' => 'Deferred credential',
                 'issuer' => 'sandbox',
@@ -25,6 +50,15 @@ return static function (array $env): array {
                     'email' => ['label' => 'Email', 'default' => 'demouser@example.com', 'maxLength' => 100],
                     'institute' => ['label' => 'Institute', 'default' => 'Example Inc', 'maxLength' => 100],
                 ],
+            ],
+        ],
+        // credentials that are issued together in one offer, in the order of the offer. The bundle
+        // has exactly one deferred credential, which the demo back-office releases.
+        'bundles' => [
+            'multiple' => [
+                'title' => 'Multiple credentials',
+                'issuer' => 'sandbox',
+                'credentials' => ['generic1', 'generic2', 'deferred'],
             ],
         ],
     ];

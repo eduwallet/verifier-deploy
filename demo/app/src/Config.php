@@ -79,6 +79,20 @@ final class Config
         return $credential;
     }
 
+    /**
+     * A bundle: credentials that are issued in one offer.
+     * @return array{key:string,title:string,issuer:string,credentials:list<string>}
+     */
+    public function bundle(string $key): array
+    {
+        $bundle = $this->catalog['bundles'][$key] ?? null;
+        if ($bundle === null) {
+            throw new ApiException(422, 'unknown_bundle', 'Unknown bundle');
+        }
+        $bundle['key'] = $key;
+        return $bundle;
+    }
+
     /** The part of the catalog that is safe to show the front-end: no tokens, no upstream URLs. */
     public function publicCatalog(): array
     {
@@ -99,6 +113,10 @@ final class Config
                 'fields' => $fields,
             ];
         }
-        return ['environment' => 'dev', 'issuers' => $issuers, 'credentials' => $credentials];
+        $bundles = [];
+        foreach ($this->catalog['bundles'] ?? [] as $key => $bundle) {
+            $bundles[$key] = ['title' => $bundle['title'], 'issuer' => $bundle['issuer'], 'credentials' => $bundle['credentials']];
+        }
+        return ['environment' => 'dev', 'issuers' => $issuers, 'credentials' => $credentials, 'bundles' => $bundles];
     }
 }

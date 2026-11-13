@@ -60,6 +60,32 @@ final class IssuerService
     }
 
     /**
+     * One offer for several credentials (API v2). The offer has one pre-authorized grant for all of them.
+     * @param array{baseUrl:string,token:string} $issuer
+     * @param list<array{credential:array<string,mixed>,data:array<string,string>}> $items catalog entries with their claims
+     * @return array{uri:string,id:string,txCode:?string}
+     */
+    public function createMultipleOffer(array $issuer, array $items): array
+    {
+        $credentials = [];
+        foreach ($items as $item) {
+            $claims = [];
+            foreach ($item['data'] as $name => $value) {
+                $claims[] = ['path' => ['credentialSubject', (string) $name], 'value' => $value];
+            }
+            $credentials[] = ['credential_configuration_id' => $item['credential']['credentialId'], 'claims' => $claims];
+        }
+        $body = ['grant' => 'pre-authorized_code', 'credentials' => $credentials];
+        $response = $this->call($issuer, 'create-offer', 'POST', '/api/v2/create-offer', $body);
+        $this->expect($response, [200], 'create the offer');
+        $json = $response->json;
+        if (!is_array($json) || !is_string($json['uri'] ?? null) || !is_string($json['id'] ?? null)) {
+            throw new ApiException(502, 'upstream_error', 'The issuer returned an unexpected offer');
+        }
+        return ['uri' => $json['uri'], 'id' => $json['id'], 'txCode' => is_string($json['txCode'] ?? null) ? $json['txCode'] : null];
+    }
+
+    /**
      * The status of the offer, with the request/response data in protocol order.
      * @param array{baseUrl:string,token:string} $issuer
      * @return array<string,mixed>
@@ -88,6 +114,9 @@ final class IssuerService
             'expiresAt' => $expiresAt,
             'reason' => $json['reason'] ?? null,
             'credentialUuid' => $json['uuid'] ?? null,
+            // an offer for multiple credentials: what was issued and which deferred transactions it has
+            'issued' => self::summarizeIssued($json['credentials'] ?? null),
+            'deferred' => self::summarizeTransactions($json['deferred'] ?? null),
             'requests' => $requests,
             'notification' => is_object($raw->requests ?? null) ? ($raw->requests->{'notification-request'} ?? null) : null,
         ];
@@ -111,6 +140,58 @@ final class IssuerService
             }
         }
         return null;
+    }
+
+    /**
+     * The claim names that the back-office can supply: the single-level paths of the supply lists.
+     * @param mixed $claims the claims of a deferred transaction
+     * @return list<string>
+     */
+    public static function suppliedClaimNames(mixed $claims): array
+    {
+        $names = [];
+        foreach (is_array($claims) ? $claims : [] as $claim) {
+            foreach (is_array($claim['supply'] ?? null) ? $claim['supply'] : [] as $path) {
+                if (is_array($path) && count($path) === 1 && is_string($path[0]) && !in_array($path[0], $names, true)) {
+                    $names[] = $path[0];
+                }
+            }
+        }
+        return $names;
+    }
+
+    /** @return list<array{credential:string,dataset:string,uuid:string}> */
+    private static function summarizeIssued(mixed $list): array
+    {
+        $issued = [];
+        foreach (is_array($list) ? $list : [] as $item) {
+            if (is_array($item) && is_string($item['credential_configuration_id'] ?? null)) {
+                $issued[] = [
+                    'credential' => $item['credential_configuration_id'],
+                    'dataset' => is_string($item['dataset_id'] ?? null) ? $item['dataset_id'] : '',
+                    'uuid' => is_string($item['uuid'] ?? null) ? $item['uuid'] : '',
+                ];
+            }
+        }
+        return $issued;
+    }
+
+    /** @return list<array{id:string,credential:string,status:string,expiresAt:?int,reason:?string}> */
+    private static function summarizeTransactions(mixed $list): array
+    {
+        $transactions = [];
+        foreach (is_array($list) ? $list : [] as $item) {
+            if (is_array($item) && is_string($item['id'] ?? null) && is_string($item['status'] ?? null)) {
+                $transactions[] = [
+                    'id' => $item['id'],
+                    'credential' => (string) ($item['credential_configuration_id'] ?? ''),
+                    'status' => $item['status'],
+                    'expiresAt' => is_numeric($item['expiresAt'] ?? null) ? (int) $item['expiresAt'] : null,
+                    'reason' => is_string($item['reason'] ?? null) ? $item['reason'] : null,
+                ];
+            }
+        }
+        return $transactions;
     }
 
     /**

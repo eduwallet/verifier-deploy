@@ -7,10 +7,19 @@ import AccordionContent from 'primevue/accordioncontent';
 import Panel from 'primevue/panel';
 import Tag from 'primevue/tag';
 import JsonPanel from './JsonPanel.vue';
-import type { DeferredFlow } from '@/flows/deferred/useDeferredFlow';
+import type { StatusResponse, TraceEntry } from '@/api/types';
 import { formatTime } from '@/utils/format';
 
-const props = defineProps<{ flow: DeferredFlow }>();
+/** What the panels need of a flow; every flow of the demo provides it */
+interface DebugFlow {
+  trace: TraceEntry[];
+  timeline: { at: Date; title: string; detail?: string }[];
+  status: StatusResponse | null;
+  step: number;
+  phase: string | null;
+}
+
+const props = defineProps<{ flow: DebugFlow }>();
 
 // newest exchange first; the index keeps the keys unique
 const exchanges = computed(() => props.flow.trace.map((entry, index) => ({ entry, index })).reverse());

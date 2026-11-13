@@ -6,6 +6,7 @@ import 'primeicons/primeicons.css';
 import App from './App.vue';
 import HomeView from './views/HomeView.vue';
 import DeferredFlow from './flows/deferred/DeferredFlow.vue';
+import MultipleFlow from './flows/multiple/MultipleFlow.vue';
 
 // hash based routing: the Apache docroot has no fallback to index.html for deep links
 const router = createRouter({
@@ -13,6 +14,7 @@ const router = createRouter({
   routes: [
     { path: '/', component: HomeView },
     { path: '/deferred', component: DeferredFlow },
+    { path: '/multiple', component: MultipleFlow },
   ],
 });
 

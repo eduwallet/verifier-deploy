@@ -321,4 +321,99 @@ final class AppTest extends TestCase
             'deferred' => [['id' => self::OWN_TX, 'credential_configuration_id' => 'DeferredCredential', 'status' => 'CREDENTIAL_PENDING', 'expiresAt' => (time() + 600) * 1000]],
         ]);
     }
+
+    // ---- multiple credentials in one offer ---------------------------------------------------------
+
+    /** create an offer for the bundle and return the run identifier */
+    private function issueMultiple(array $data = []): string
+    {
+        $this->issuer->on('POST', self::BASE . '/api/v2/create-offer', ['uri' => 'openid-credential-offer://?credential_offer_uri=' . rawurlencode(self::BASE . '/get-credential-offer/' . self::OWN), 'id' => self::OWN]);
+        $result = $this->call('POST', '/api/issue-multiple', ['bundle' => 'multiple', 'data' => $data]);
+        $this->assertSame(200, $result['status'], $result['raw']);
+        return $result['json']['run'];
+    }
+
+    public function testCatalogListsTheBundle(): void
+    {
+        $bundles = $this->call('GET', '/api/catalog')['json']['bundles'];
+        $this->assertSame(['generic1', 'generic2', 'deferred'], $bundles['multiple']['credentials']);
+    }
+
+    public function testMultipleOfferHasOneEntryPerCredentialWithDefaults(): void
+    {
+        $this->issueMultiple(['generic2' => ['grade' => 'A']]);
+        $call = null;
+        foreach ($this->issuer->calls as $c) {
+            if (str_ends_with($c['url'], '/api/v2/create-offer')) {
+                $call = $c;
+            }
+        }
+        $body = json_decode($call['body'], true);
+        $this->assertSame('pre-authorized_code', $body['grant']);
+        $this->assertSame(['GenericCredential_JWT', 'GenericCredential_JWT', 'DeferredCredential'], array_column($body['credentials'], 'credential_configuration_id'));
+        $first = $body['credentials'][0]['claims'];
+        $this->assertSame(['credentialSubject', 'institute'], $first[0]['path']);
+        $this->assertSame('Education Inc', $first[0]['value']);
+        $this->assertSame(['Lessons Learned', 'B-'], [$first[1]['value'], $first[2]['value']]);
+        $this->assertSame(['Digital Knowledge', 'A'], [$body['credentials'][1]['claims'][1]['value'], $body['credentials'][1]['claims'][2]['value']]);
+        $this->assertSame(['name', 'email', 'institute'], array_map(fn($c) => $c['path'][1], $body['credentials'][2]['claims']));
+    }
+
+    public function testMultipleOfferValidatesTheInput(): void
+    {
+        $this->assertSame(422, $this->call('POST', '/api/issue-multiple', ['bundle' => 'nope'])['status']);
+        $this->assertSame(422, $this->call('POST', '/api/issue-multiple', ['bundle' => 'multiple', 'data' => ['PID' => []]])['status']);
+        $this->assertSame(422, $this->call('POST', '/api/issue-multiple', ['bundle' => 'multiple', 'data' => ['generic1' => ['admin' => 'x']]])['status']);
+        $this->assertSame(422, $this->call('POST', '/api/issue-multiple', ['bundle' => 'multiple', 'data' => ['generic1' => ['grade' => ['a']]]])['status']);
+        $this->assertSame([], $this->issuer->calls);
+    }
+
+    public function testStatusOfMultipleOfferListsIssuedAndDeferred(): void
+    {
+        $run = $this->issueMultiple();
+        $this->issuer->on('POST', self::BASE . '/api/check-offer', [
+            'status' => 'CREDENTIAL_PENDING',
+            'credentials' => [
+                ['uuid' => 'u1', 'dataset_id' => 'GenericCredential_JWT#0', 'credential_configuration_id' => 'GenericCredential_JWT'],
+                ['uuid' => 'u2', 'dataset_id' => 'GenericCredential_JWT#1', 'credential_configuration_id' => 'GenericCredential_JWT'],
+                ['uuid' => 'bad', 'dataset_id' => 'GenericCredential_JWT#2', 'credential_configuration_id' => 'GenericCredential_JWT'],
+            ],
+            'deferred' => [['id' => self::OWN_TX, 'credential_configuration_id' => 'DeferredCredential', 'status' => 'CREDENTIAL_PENDING', 'expiresAt' => 5]],
+        ]);
+        $json = $this->call('GET', "/api/session/$run")['json'];
+        $this->assertSame([['key' => 'generic1', 'uuid' => 'u1'], ['key' => 'generic2', 'uuid' => 'u2']], $json['issued'], 'by catalog key, a data set that does not fit the offer is ignored');
+        $this->assertSame([['id' => self::OWN_TX, 'key' => 'deferred', 'status' => 'CREDENTIAL_PENDING', 'expiresAt' => 5, 'reason' => null]], $json['deferred']);
+        $this->assertStringNotContainsString('Credential', json_encode([$json['issued'], $json['deferred']]), 'no issuer configuration ids');
+
+        $single = $this->issue();
+        $this->assertSame([], $this->call('GET', "/api/session/$single")['json']['issued']);
+    }
+
+    public function testReleaseSendsTheOfferedDataOfTheDeferredCredential(): void
+    {
+        $run = $this->issueMultiple(['deferred' => ['name' => 'Alice']]);
+        $this->scriptOwnTransaction();
+        $this->issuer->on('GET', self::BASE . '/api/v2/deferred/' . self::OWN_TX, [
+            'id' => self::OWN_TX, 'status' => 'CREDENTIAL_PENDING', 'credential_configuration_id' => 'DeferredCredential',
+            'data' => ['name' => 'Alice'], 'claims_supplied' => [],
+            'claims' => [['path' => ['name'], 'type' => 'string', 'mandatory' => true, 'origin' => [], 'supply' => [['name']]],
+                         ['path' => ['email'], 'type' => 'string', 'mandatory' => false, 'origin' => [], 'supply' => [['email']]]],
+        ]);
+        $this->issuer->on('POST', self::BASE . '/api/v2/deferred/' . self::OWN_TX, ['status' => 'CREDENTIAL_READY']);
+        $result = $this->call('POST', "/api/session/$run/release", []);
+        $this->assertSame(200, $result['status'], $result['raw']);
+        $call = end($this->issuer->calls);
+        $this->assertSame('/api/v2/deferred/' . self::OWN_TX, substr($call['url'], strlen(self::BASE)));
+        $this->assertSame(['claims' => ['name' => 'Alice', 'email' => 'demouser@example.com']], json_decode($call['body'], true));
+    }
+
+    public function testReleaseNeedsABundleRunAndATransaction(): void
+    {
+        $single = $this->issue();
+        $this->assertSame(404, $this->call('POST', "/api/session/$single/release", [])['status']);
+
+        $run = $this->issueMultiple();
+        $this->issuer->on('POST', self::BASE . '/api/check-offer', ['status' => 'ACCESS_TOKEN_CREATED']);
+        $this->assertSame(404, $this->call('POST', "/api/session/$run/release", [])['status']);
+    }
 }

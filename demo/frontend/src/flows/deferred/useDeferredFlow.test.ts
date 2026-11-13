@@ -18,7 +18,7 @@ const mocked = vi.mocked(api, true);
 function status(statusName: string, phase: StatusResponse['phase'], extra: Partial<StatusResponse> = {}): StatusResponse {
   return {
     run: 'r1', status: statusName, phase, createdAt: 1, lastUpdatedAt: 2, expiresAt: null, reason: null,
-    credentialUuid: null, requests: {}, notification: null, ...extra,
+    credentialUuid: null, issued: [], deferred: [], requests: {}, notification: null, ...extra,
   };
 }
 
@@ -37,7 +37,7 @@ describe('useDeferredFlow', () => {
     vi.useFakeTimers();
     vi.clearAllMocks();
     mocked.catalog.mockResolvedValue({
-      csrfToken: 't', environment: 'dev',
+      csrfToken: 't', environment: 'dev', bundles: {},
       issuers: { sandbox: { name: 'Sandbox', configured: true } },
       credentials: { deferred: { title: 'Deferred credential', issuer: 'sandbox', deferred: true, fields: [
         { name: 'name', label: 'Name', default: 'Demo User', maxLength: 100 },
