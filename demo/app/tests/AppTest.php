@@ -15,6 +15,9 @@ final class AppTest extends TestCase
     private const TOKEN = 'super-secret-token';
     private const OWN = '11111111-1111-1111-1111-111111111111';
     private const OTHER = '22222222-2222-2222-2222-222222222222';
+    // a transaction is identified by '<offer id>.<transaction id>'
+    private const OWN_TX = self::OWN . '.tx-own';
+    private const OTHER_TX = self::OTHER . '.tx-other';
 
     private FakeTransport $issuer;
     private ArraySession $session;
@@ -200,28 +203,29 @@ final class AppTest extends TestCase
     {
         $run = $this->issue();
         $in10min = (time() + 600) * 1000;
+        $this->scriptOwnTransaction();
         $this->issuer->on('GET', self::BASE . '/api/v2/deferred', [
-            ['id' => self::OTHER, 'credential_configuration_id' => 'DeferredCredential', 'status' => 'CREDENTIAL_PENDING', 'createdAt' => 1, 'expiresAt' => $in10min],
-            ['id' => self::OWN, 'credential_configuration_id' => 'DeferredCredential', 'status' => 'CREDENTIAL_PENDING', 'createdAt' => 2, 'expiresAt' => $in10min],
+            ['id' => self::OTHER_TX, 'credential_configuration_id' => 'DeferredCredential', 'status' => 'CREDENTIAL_PENDING', 'createdAt' => 1, 'expiresAt' => $in10min],
+            ['id' => self::OWN_TX, 'credential_configuration_id' => 'DeferredCredential', 'status' => 'CREDENTIAL_PENDING', 'createdAt' => 2, 'expiresAt' => $in10min],
             ['id' => '33333333-3333-3333-3333-333333333333', 'credential_configuration_id' => 'PID', 'status' => 'CREDENTIAL_PENDING', 'createdAt' => 3, 'expiresAt' => $in10min],
         ]);
         $detail = fn(string $id, array $data) => ['id' => $id, 'status' => 'CREDENTIAL_PENDING', 'createdAt' => 1, 'expiresAt' => $in10min,
             'credential_configuration_id' => 'DeferredCredential', 'proofs' => 1, 'ttl' => 3600, 'interval' => 5, 'data' => $data, 'claims_supplied' => [],
             'claims' => [['path' => ['name'], 'type' => 'string', 'mandatory' => true, 'origin' => [['#any', 'name']], 'supply' => [['name']]]]];
-        $this->issuer->on('GET', self::BASE . '/api/v2/deferred/' . self::OTHER, $detail(self::OTHER, ['name' => 'Secret Person']));
-        $this->issuer->on('GET', self::BASE . '/api/v2/deferred/' . self::OWN, $detail(self::OWN, ['name' => 'Demo User', 'email' => 'demouser@example.com']));
+        $this->issuer->on('GET', self::BASE . '/api/v2/deferred/' . self::OTHER_TX, $detail(self::OTHER_TX, ['name' => 'Secret Person']));
+        $this->issuer->on('GET', self::BASE . '/api/v2/deferred/' . self::OWN_TX, $detail(self::OWN_TX, ['name' => 'Demo User', 'email' => 'demouser@example.com']));
 
         $result = $this->call('GET', "/api/session/$run/deferred");
         $this->assertSame(200, $result['status'], $result['raw']);
         $items = $result['json']['items'];
         $this->assertCount(2, $items, 'other credential types are not listed');
-        $this->assertSame([self::OWN, self::OTHER], array_column($items, 'id'));
+        $this->assertSame([self::OWN_TX, self::OTHER_TX], array_column($items, 'id'));
         $this->assertSame([true, false], array_column($items, 'own'));
         $this->assertSame(['name', 'email'], $items[0]['claimsKnown']);
         $this->assertSame('11111111', $items[0]['shortId']);
         $this->assertGreaterThan(500, $items[0]['expiresInSeconds']);
         $this->assertStringNotContainsString('Secret Person', json_encode($items));
-        $this->assertSame(self::OWN, $result['json']['own']['id']);
+        $this->assertSame(self::OWN_TX, $result['json']['own']['id']);
         $this->assertSame('Demo User', $result['json']['own']['data']['name']);
         $this->assertSame('string', $result['json']['own']['claims'][0]['type']);
     }
@@ -238,9 +242,10 @@ final class AppTest extends TestCase
         $this->assertStringContainsString('"notification":{}', $raw);
 
         $in = (time() + 600) * 1000;
+        $this->scriptOwnTransaction();
         $this->issuer->on('GET', self::BASE . '/api/v2/deferred', []);
-        $this->issuer->on('GET', self::BASE . '/api/v2/deferred/' . self::OWN, [
-            'id' => self::OWN, 'status' => 'CREDENTIAL_PENDING', 'createdAt' => 1, 'expiresAt' => $in, 'credential_configuration_id' => 'DeferredCredential',
+        $this->issuer->on('GET', self::BASE . '/api/v2/deferred/' . self::OWN_TX, [
+            'id' => self::OWN_TX, 'status' => 'CREDENTIAL_PENDING', 'createdAt' => 1, 'expiresAt' => $in, 'credential_configuration_id' => 'DeferredCredential',
             'proofs' => 1, 'ttl' => 1, 'interval' => 1, 'data' => new \stdClass(), 'claims_supplied' => new \stdClass(), 'claims' => [],
         ]);
         $raw = $this->call('GET', "/api/session/$run/deferred", query: ['trace' => '1'])['raw'];
@@ -252,11 +257,12 @@ final class AppTest extends TestCase
     public function testAuthorizeSendsOnlyKnownClaimsForTheOwnTransaction(): void
     {
         $run = $this->issue();
-        $this->issuer->on('POST', self::BASE . '/api/v2/deferred/' . self::OWN, ['status' => 'CREDENTIAL_READY']);
+        $this->scriptOwnTransaction();
+        $this->issuer->on('POST', self::BASE . '/api/v2/deferred/' . self::OWN_TX, ['status' => 'CREDENTIAL_READY']);
         $result = $this->call('POST', "/api/session/$run/deferred/authorize", ['claims' => ['name' => 'Bob', 'email' => 'bob@example.com']]);
         $this->assertSame(200, $result['status'], $result['raw']);
         $call = end($this->issuer->calls);
-        $this->assertSame('/api/v2/deferred/' . self::OWN, substr($call['url'], strlen(self::BASE)));
+        $this->assertSame('/api/v2/deferred/' . self::OWN_TX, substr($call['url'], strlen(self::BASE)));
         $this->assertSame(['claims' => ['name' => 'Bob', 'email' => 'bob@example.com']], json_decode($call['body'], true));
 
         $this->assertSame(422, $this->call('POST', "/api/session/$run/deferred/authorize", ['claims' => ['admin' => 'yes']])['status']);
@@ -265,7 +271,8 @@ final class AppTest extends TestCase
     public function testAuthorizeMapsIssuerErrors(): void
     {
         $run = $this->issue();
-        $url = self::BASE . '/api/v2/deferred/' . self::OWN;
+        $this->scriptOwnTransaction();
+        $url = self::BASE . '/api/v2/deferred/' . self::OWN_TX;
         $this->issuer->on('POST', $url, ['errors' => ['missing name']], 400);
         $result = $this->call('POST', "/api/session/$run/deferred/authorize", ['claims' => []]);
         $this->assertSame(422, $result['status']);
@@ -280,10 +287,21 @@ final class AppTest extends TestCase
     public function testDenySendsTheStatusAndReason(): void
     {
         $run = $this->issue();
-        $this->issuer->on('POST', self::BASE . '/api/v2/deferred/' . self::OWN, ['status' => 'CREDENTIAL_DENIED']);
+        $this->scriptOwnTransaction();
+        $this->issuer->on('POST', self::BASE . '/api/v2/deferred/' . self::OWN_TX, ['status' => 'CREDENTIAL_DENIED']);
         $this->assertSame(200, $this->call('POST', "/api/session/$run/deferred/deny", ['reason' => 'demo'])['status']);
         $this->assertSame(['status' => 'CREDENTIAL_DENIED', 'reason' => 'demo'], json_decode(end($this->issuer->calls)['body'], true));
         $this->assertSame(422, $this->call('POST', "/api/session/$run/deferred/deny", ['reason' => ['x']])['status']);
+    }
+
+    public function testAuthorizeBeforeTheWalletRequestedTheCredentialIsNotFound(): void
+    {
+        $run = $this->issue();
+        // no transaction exists until the wallet requests the credential
+        $this->issuer->on('POST', self::BASE . '/api/check-offer', ['status' => 'CREDENTIAL_OFFERED']);
+        $result = $this->call('POST', "/api/session/$run/deferred/authorize", ['claims' => []]);
+        $this->assertSame(404, $result['status']);
+        $this->assertSame('not_found', $result['json']['error']['code']);
     }
 
     public function testUpstreamFailureIsReportedGenerically(): void
@@ -293,5 +311,14 @@ final class AppTest extends TestCase
         $this->assertSame(502, $result['status']);
         $this->assertSame('upstream_unreachable', $result['json']['error']['code']);
         $this->assertStringNotContainsString(self::TOKEN, $result['raw']);
+    }
+
+    /** The check-offer response lists the transaction of this offer once the wallet requested the credential. */
+    private function scriptOwnTransaction(): void
+    {
+        $this->issuer->on('POST', self::BASE . '/api/check-offer', [
+            'status' => 'CREDENTIAL_PENDING',
+            'deferred' => [['id' => self::OWN_TX, 'credential_configuration_id' => 'DeferredCredential', 'status' => 'CREDENTIAL_PENDING', 'expiresAt' => (time() + 600) * 1000]],
+        ]);
     }
 }

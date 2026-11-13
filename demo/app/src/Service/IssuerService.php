@@ -94,6 +94,26 @@ final class IssuerService
     }
 
     /**
+     * The id of the deferred transaction of this offer for the credential configuration. A transaction is identified
+     * by '<offer id>.<transaction id>', and the transaction id is only known to the issuer once the wallet has
+     * requested the credential, so this is null until then. The issuer lists the transactions in the check-offer response.
+     * @param array{baseUrl:string,token:string} $issuer
+     */
+    public function findTransactionId(array $issuer, string $offerId, string $credentialId): ?string
+    {
+        $response = $this->call($issuer, 'check-offer', 'POST', '/api/check-offer', ['id' => $offerId]);
+        $this->expect($response, [200], 'read the offer status');
+        $deferred = is_array($response->json) && is_array($response->json['deferred'] ?? null) ? $response->json['deferred'] : [];
+        foreach ($deferred as $item) {
+            if (is_array($item) && is_string($item['id'] ?? null) && ($item['credential_configuration_id'] ?? null) === $credentialId
+                && str_starts_with($item['id'], $offerId . '.')) {
+                return $item['id'];
+            }
+        }
+        return null;
+    }
+
+    /**
      * Fetch the credential offer that the offer URI refers to. The offer endpoint needs no token, so none is sent,
      * and only the issuer itself is contacted.
      * @param array{baseUrl:string,token:string} $issuer
@@ -128,7 +148,7 @@ final class IssuerService
      * @param array{baseUrl:string,token:string} $issuer
      * @return array{items:list<array<string,mixed>>,own:?array<string,mixed>}
      */
-    public function listDeferred(array $issuer, string $credentialId, string $ownId): array
+    public function listDeferred(array $issuer, string $credentialId, ?string $ownId): array
     {
         $response = $this->call($issuer, 'list-deferred', 'GET', '/api/v2/deferred');
         $this->expect($response, [200], 'list the deferred transactions');
@@ -145,7 +165,7 @@ final class IssuerService
             }
             $items[] = self::summarize($detail, $item['id'] === $ownId);
         }
-        return ['items' => $items, 'own' => $this->deferredDetail($issuer, $ownId, true)];
+        return ['items' => $items, 'own' => $ownId === null ? null : $this->deferredDetail($issuer, $ownId, true)];
     }
 
     /**

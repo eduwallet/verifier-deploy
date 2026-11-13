@@ -122,7 +122,8 @@ final class App
     {
         [$run, $credential, $issuer] = $this->run($runId);
         $this->session->close();
-        $list = $this->issuers->listDeferred($issuer, $credential['credentialId'], $run['offerId']);
+        $ownId = $this->issuers->findTransactionId($issuer, $run['offerId'], $credential['credentialId']);
+        $list = $this->issuers->listDeferred($issuer, $credential['credentialId'], $ownId);
         return $this->ok($list);
     }
 
@@ -133,20 +134,20 @@ final class App
         $claims = $this->validateClaims($credential, is_array($body['claims'] ?? null) ? $body['claims'] : [], false);
         $this->limiter->hit('authorize', 20, 60);
         $this->session->close();
-        $result = $this->issuers->authorize($issuer, $run['offerId'], $claims);
+        $result = $this->issuers->authorize($issuer, $this->transactionId($run, $credential, $issuer), $claims);
         return $this->ok(['authorized' => true, 'claims' => $claims, 'result' => $result]);
     }
 
     private function deny(Request $request, string $runId): Response
     {
-        [$run, , $issuer] = $this->run($runId);
+        [$run, $credential, $issuer] = $this->run($runId);
         $reason = $request->json()['reason'] ?? null;
         if ($reason !== null && (!is_string($reason) || strlen($reason) > 500)) {
             throw new ApiException(422, 'invalid_reason', 'The reason must be a string of at most 500 characters');
         }
         $this->limiter->hit('authorize', 20, 60);
         $this->session->close();
-        $result = $this->issuers->deny($issuer, $run['offerId'], $reason);
+        $result = $this->issuers->deny($issuer, $this->transactionId($run, $credential, $issuer), $reason);
         return $this->ok(['denied' => true, 'result' => $result]);
     }
 
@@ -164,6 +165,21 @@ final class App
         }
         $credential = $this->config->credential($run['credential']);
         return [$run, $credential, $this->config->issuer($credential['issuer'])];
+    }
+
+    /**
+     * The id of the deferred transaction of this run: the wallet has to have requested the credential first.
+     * @param array<string,mixed> $run
+     * @param array<string,mixed> $credential
+     * @param array<string,mixed> $issuer
+     */
+    private function transactionId(array $run, array $credential, array $issuer): string
+    {
+        $id = $this->issuers->findTransactionId($issuer, $run['offerId'], $credential['credentialId']);
+        if ($id === null) {
+            throw new ApiException(404, 'not_found', 'The deferred transaction does not exist (yet)');
+        }
+        return $id;
     }
 
     /**
