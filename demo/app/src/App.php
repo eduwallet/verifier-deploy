@@ -40,6 +40,7 @@ final class App
         $r->add('GET', '/api/catalog', fn($req) => $this->catalog());
         $r->add('POST', '/api/issue', fn($req) => $this->issue($req));
         $r->add('POST', '/api/issue-multiple', fn($req) => $this->issueMultiple($req));
+        $r->add('POST', '/api/issue-presentation', fn($req) => $this->issuePresentation($req));
         $r->add('POST', '/api/session/{run}/release', fn($req, $p) => $this->release($p['run']));
         $r->add('GET', '/api/session/{run}', fn($req, $p) => $this->status($req, $p['run']));
         $r->add('GET', '/api/session/{run}/offer', fn($req, $p) => $this->offer($p['run']));
@@ -68,7 +69,17 @@ final class App
 
     private function catalog(): Response
     {
-        return Response::json(200, ['csrfToken' => $this->csrfToken()] + $this->config->publicCatalog());
+        $catalog = $this->config->publicCatalog();
+        // fields with a generated default get a value that is stable during the session
+        foreach ($catalog['credentials'] as &$credential) {
+            foreach ($credential['fields'] as &$field) {
+                $field['default'] = $this->fieldDefault($field);
+                unset($field['generate']);
+            }
+            unset($field);
+        }
+        unset($credential);
+        return Response::json(200, ['csrfToken' => $this->csrfToken()] + $catalog);
     }
 
     private function issue(Request $request): Response
@@ -145,6 +156,32 @@ final class App
             'txCode' => $offer['txCode'],
             'data' => $data,
         ]);
+    }
+
+    /**
+     * Start an issuance during which the wallet has to present credentials first. The query comes from the catalog.
+     */
+    private function issuePresentation(Request $request): Response
+    {
+        $body = $request->json();
+        $presentation = $this->config->presentation((string) ($body['presentation'] ?? ''));
+        $issuer = $this->config->issuer($presentation['issuer']);
+
+        $this->limiter->hit('issue', 10, 60);
+        $offer = $this->issuers->createPresentationOffer($issuer, $presentation['credentialId'], $presentation['dcql']);
+
+        $run = bin2hex(random_bytes(16));
+        $runs = $this->session->get('runs', []);
+        $runs[$run] = [
+            'presentation' => $presentation['key'],
+            'offerId' => $offer['id'],
+            'offerUri' => $offer['uri'],
+            'createdAt' => time(),
+        ];
+        $this->session->set('runs', array_slice($runs, -self::MAX_RUNS, null, true));
+        $this->session->close();
+
+        return $this->ok(['run' => $run, 'offerId' => $offer['id'], 'offerUri' => $offer['uri'], 'txCode' => null, 'data' => (object) []]);
     }
 
     /**
@@ -287,6 +324,12 @@ final class App
             }
             throw new ApiException(500, 'configuration_error', 'The bundle has no deferred credential');
         }
+        if (isset($run['presentation'])) {
+            // the credential that is issued after the presentation: it has no fields, the issuer fills it
+            $presentation = $this->config->presentation($run['presentation']);
+            $credential = ['key' => $presentation['key'], 'credentialId' => $presentation['credentialId'], 'fields' => []];
+            return [$run, $credential, $this->config->issuer($presentation['issuer'])];
+        }
         $credential = $this->config->credential($run['credential']);
         return [$run, $credential, $this->config->issuer($credential['issuer'])];
     }
@@ -328,10 +371,29 @@ final class App
                 }
                 $claims[$name] = trim($value);
             } elseif ($useDefaults) {
-                $claims[$name] = $field['default'];
+                $claims[$name] = $this->fieldDefault($field);
             }
         }
         return $claims;
+    }
+
+    /**
+     * The default of a catalog field. A field with 'generate' (a prefix) has a random value, the same one during the session.
+     * @param array<string,mixed> $field
+     */
+    private function fieldDefault(array $field): string
+    {
+        if (!isset($field['generate'])) {
+            return (string) $field['default'];
+        }
+        $generated = $this->session->get('generated', []);
+        $generated = is_array($generated) ? $generated : [];
+        $prefix = (string) $field['generate'];
+        if (!isset($generated[$prefix])) {
+            $generated[$prefix] = $prefix . bin2hex(random_bytes(6));
+            $this->session->set('generated', $generated);
+        }
+        return $generated[$prefix];
     }
 
     private function csrfToken(): string

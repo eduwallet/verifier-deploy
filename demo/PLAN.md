@@ -9,6 +9,10 @@ Status: **in progress**. Flow 0 (deferred credential) is built end to end:
   flow 0 (`src/flows/deferred/`), debug panels (timeline, back-end <-> issuer exchanges, session state),
   Vitest tests. Walked through in a headless browser against a fake issuer.
 
+Flow 6 (presentation during issuance, `src/flows/presentation/`) is built as well, see 5.2. It needs the
+embedded authorization server on the sandbox issuer and the `eduID` and `GenericCredentialPDI` configurations of `agents-conf`
+(branch `development`), and has not been tried against the live issuer and a wallet yet.
+
 Not yet done: verification against the real sandbox issuer (needs the `DeferredCredential`
 configuration deployed), the Ansible entry and `hasFrontend` build step, the verifier calls, other flows.
 
@@ -288,6 +292,34 @@ attribute anywhere in `agents-conf`). Proposal, modelled on the existing `Generi
 - The issuer image must contain the deferred support (`veramo-agent` commit `05baee7`,
   2026-11-03 and later) and be redeployed with the new configuration. The deferred issuer
   fails to start on a wrong deferred configuration, which makes mistakes visible directly.
+
+### 5.2 Flow 6: presentation during issuance
+
+The wallet presents an eduID while it receives a credential. The first step is optional, so a visitor whose wallet
+already has an eduID skips it. Upstream design: `veramo-agent/doc/DESIGN_PRESENTATION_DURING_ISSUANCE.md`.
+
+| # | Wizard step | What happens | Back-end calls |
+|---|---|---|---|
+| 1 | **eduID** | the visitor chooses "my wallet has an eduID" (continue) or "issue an eduID first": a form with the eduID claims, a pre-authorized offer, QR code, status until `CREDENTIAL_ISSUED` | `POST /api/issue` (`eduid`), polling `GET /api/session/{run}` |
+| 2 | **Offer** | shows the claim mapping, **Create the offer** makes an `authorization_code` offer with the DCQL query, QR code and offer JSON | `POST /api/issue-presentation` -> issuer `POST /api/v2/create-offer` with `dcql` |
+| 3 | **Presentation** | the wallet gets the presentation request from the issuer, the verifier verifies it; milestones from the issuer status (`PRESENTATION_REQUESTED`, `PRESENTATION_VERIFIED`, `ACCESS_TOKEN_CREATED`) | polling |
+| 4 | **Completed** | `CREDENTIAL_ISSUED`, the mapping and the issuer messages | polling (slow) |
+
+Decisions:
+
+- The DCQL query is in `private/catalog.php` (`presentations.eduid`) and never comes from the front-end. It asks for the
+  `given_name`, `family_name` and `email` of an eduID, query id `eduID`. The `vct` is that of the eduID issuer
+  (`ISSUER_EPI_URL`); the sandbox eduID refers to the same vct in its metadata, so one value covers both. The public catalog only lists the requested claim names, not the query, because that holds issuer URLs.
+- The issued credential `GenericCredentialPDI` (VCDM 2.0, format `vc+jwt`, so no vct) has `firstName`, `lastName` and `eMail`, with the origins
+  `["#accessData", "eduID", "given_name" | "family_name" | "email"]`. The first path element after `#accessData` is the query id.
+- The sandbox issuer gets an `eduID` configuration whose claims have the origin `#any`, so the data comes from the offer, and a `vct` that points to the eduID definition of the epi issuer (no vct document in the sandbox). The
+  eduID issuer binds one eduID identifier (`sub`) to a holder key and revokes earlier eduIDs of the same identifier. The back-end
+  therefore generates a `sub` per visitor session (catalog `generate`), so visitors do not revoke each other's eduID; the visitor
+  can change it to get a second eduID in the same wallet.
+- The embedded authorization server of the sandbox issuer runs in `in-app` mode: the wallet does the presentation in the app and there
+  are no browser redirects, so no `clients` and no `allowedRedirectUris` at the verifier.
+- New issuer statuses in `IssuerService::PHASES`: `PRESENTATION_REQUESTED` (`presentation`), `PRESENTATION_VERIFIED` (`verified`),
+  `AUTHORIZATION_DENIED` (`denied`). The wizard stays in step 3 when the presentation is rejected.
 
 ## 6. Front-end design
 

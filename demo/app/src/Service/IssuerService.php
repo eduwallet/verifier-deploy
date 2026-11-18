@@ -11,6 +11,9 @@ final class IssuerService
     private const PHASE_ORDER = [
         'create_offer-request', 'create_offer-response',
         'credential_offer-request', 'credential_offer-response',
+        'authorization_challenge-request', 'authorization_challenge-response',
+        'authorize-request',
+        'presentation-request', 'presentation-response',
         'access_token-request', 'access_token-response',
         'get_credential-request', 'get_credential-response',
         'deferred-request', 'deferred-response',
@@ -21,6 +24,10 @@ final class IssuerService
     private const PHASES = [
         'OFFER_CREATED' => 'created',
         'OFFER_URI_RETRIEVED' => 'retrieved',
+        // presentation during issuance (authorization code offers with a DCQL query)
+        'PRESENTATION_REQUESTED' => 'presentation',
+        'PRESENTATION_VERIFIED' => 'verified',
+        'AUTHORIZATION_DENIED' => 'denied',
         'ACCESS_TOKEN_REQUESTED' => 'token',
         'ACCESS_TOKEN_CREATED' => 'token',
         'CREDENTIAL_REQUEST_RECEIVED' => 'processing',
@@ -83,6 +90,29 @@ final class IssuerService
             throw new ApiException(502, 'upstream_error', 'The issuer returned an unexpected offer');
         }
         return ['uri' => $json['uri'], 'id' => $json['id'], 'txCode' => is_string($json['txCode'] ?? null) ? $json['txCode'] : null];
+    }
+
+    /**
+     * An offer with the authorization code grant for one credential. The wallet first has to present the credentials
+     * of the DCQL query to the embedded authorization server of the issuer; the issuer fills the credential from them.
+     * @param array{baseUrl:string,token:string} $issuer
+     * @param array<string,mixed> $dcql
+     * @return array{uri:string,id:string,txCode:?string}
+     */
+    public function createPresentationOffer(array $issuer, string $credentialId, array $dcql): array
+    {
+        $body = [
+            'grant' => 'authorization_code',
+            'credentials' => [['credential_configuration_id' => $credentialId]],
+            'dcql' => $dcql,
+        ];
+        $response = $this->call($issuer, 'create-offer', 'POST', '/api/v2/create-offer', $body);
+        $this->expect($response, [200], 'create the offer');
+        $json = $response->json;
+        if (!is_array($json) || !is_string($json['uri'] ?? null) || !is_string($json['id'] ?? null)) {
+            throw new ApiException(502, 'upstream_error', 'The issuer returned an unexpected offer');
+        }
+        return ['uri' => $json['uri'], 'id' => $json['id'], 'txCode' => null];
     }
 
     /**

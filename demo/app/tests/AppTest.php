@@ -416,4 +416,89 @@ final class AppTest extends TestCase
         $this->issuer->on('POST', self::BASE . '/api/check-offer', ['status' => 'ACCESS_TOKEN_CREATED']);
         $this->assertSame(404, $this->call('POST', "/api/session/$run/release", [])['status']);
     }
+
+    // ---- presentation during issuance ------------------------------------------------------------
+
+    private function issuePresentation(): string
+    {
+        $this->issuer->on('POST', self::BASE . '/api/v2/create-offer', ['uri' => 'openid-credential-offer://?credential_offer_uri=' . rawurlencode(self::BASE . '/get-credential-offer/' . self::OWN), 'id' => self::OWN]);
+        $result = $this->call('POST', '/api/issue-presentation', ['presentation' => 'eduid']);
+        $this->assertSame(200, $result['status'], $result['raw']);
+        return $result['json']['run'];
+    }
+
+    public function testPresentationOfferHasTheDcqlQueryAndNoClaims(): void
+    {
+        $this->issuePresentation();
+        $body = json_decode($this->issuer->calls[0]['body'], true);
+        $this->assertSame('authorization_code', $body['grant']);
+        $this->assertSame([['credential_configuration_id' => 'GenericCredentialPDI']], $body['credentials']);
+        $query = $body['dcql']['credentials'][0];
+        $this->assertSame('eduID', $query['id']);
+        $this->assertSame('dc+sd-jwt', $query['format']);
+        $this->assertSame(['https://epi.issuer.dev.eduwallet.nl/vct/eduid'], $query['meta']['vct_values']);
+        $this->assertSame(['given_name', 'family_name', 'email'], array_map(fn($c) => $c['path'][0], $query['claims']));
+    }
+
+    public function testPresentationOfferTakesNoInputFromTheFrontEnd(): void
+    {
+        $this->assertSame(422, $this->call('POST', '/api/issue-presentation', ['presentation' => 'nope'])['status']);
+        $this->assertSame([], $this->issuer->calls);
+        $this->issuer->on('POST', self::BASE . '/api/v2/create-offer', ['uri' => 'x', 'id' => self::OWN]);
+        $this->call('POST', '/api/issue-presentation', ['presentation' => 'eduid', 'dcql' => ['credentials' => []], 'credential' => 'deferred']);
+        $body = json_decode($this->issuer->calls[0]['body'], true);
+        $this->assertSame('eduID', $body['dcql']['credentials'][0]['id']);
+    }
+
+    public function testCatalogListsThePresentationAndGeneratesTheEduidIdentifier(): void
+    {
+        $json = $this->call('GET', '/api/catalog')['json'];
+        $presentation = $json['presentations']['eduid'];
+        $this->assertSame('eduid', $presentation['prerequisite']);
+        $this->assertSame(['firstName' => 'given_name', 'lastName' => 'family_name', 'eMail' => 'email'], $presentation['mapping']);
+        $this->assertSame(['given_name', 'family_name', 'email'], $presentation['requested']);
+        $this->assertStringNotContainsString('GenericCredentialPDI', json_encode($json));
+
+        $sub = $json['credentials']['eduid']['fields'][0];
+        $this->assertSame('sub', $sub['name']);
+        $this->assertMatchesRegularExpression('/^demo-[a-f0-9]{12}$/', $sub['default']);
+        $this->assertArrayNotHasKey('generate', $sub);
+        // stable during the session
+        $this->assertSame($sub['default'], $this->call('GET', '/api/catalog')['json']['credentials']['eduid']['fields'][0]['default']);
+    }
+
+    public function testEduidIsIssuedWithTheGeneratedIdentifier(): void
+    {
+        $sub = $this->call('GET', '/api/catalog')['json']['credentials']['eduid']['fields'][0]['default'];
+        $this->issuer->on('POST', self::BASE . '/api/create-offer', ['uri' => 'x', 'id' => self::OWN]);
+        $result = $this->call('POST', '/api/issue', ['credential' => 'eduid', 'data' => ['given_name' => 'Alice']]);
+        $this->assertSame(200, $result['status'], $result['raw']);
+        $body = json_decode($this->issuer->calls[0]['body'], true);
+        $this->assertSame(['eduID'], $body['credentials']);
+        $this->assertSame($sub, $body['credentialDataSupplierInput']['sub']);
+        $this->assertSame('Alice', $body['credentialDataSupplierInput']['given_name']);
+        $this->assertSame('Alice', $result['json']['data']['given_name']);
+    }
+
+    public function testStatusOfAPresentationRunMapsThePresentationStatuses(): void
+    {
+        $run = $this->issuePresentation();
+        foreach (['PRESENTATION_REQUESTED' => 'presentation', 'PRESENTATION_VERIFIED' => 'verified', 'AUTHORIZATION_DENIED' => 'denied', 'ACCESS_TOKEN_CREATED' => 'token'] as $status => $phase) {
+            $this->issuer->on('POST', self::BASE . '/api/check-offer', ['status' => $status, 'requests' => [
+                'presentation-request' => ['requestUri' => 'x'], 'access_token-request' => [], 'credential_offer-request' => [],
+            ]]);
+            $json = $this->call('GET', "/api/session/$run")['json'];
+            $this->assertSame($phase, $json['phase'], $status);
+        }
+        $this->assertSame(['credential_offer-request', 'presentation-request', 'access_token-request'], array_keys($json['requests']));
+        $this->assertSame([], $json['issued']);
+    }
+
+    public function testThePresentationRunHasNoDeferredTransactions(): void
+    {
+        $run = $this->issuePresentation();
+        $this->issuer->on('POST', self::BASE . '/api/check-offer', ['status' => 'PRESENTATION_REQUESTED']);
+        $this->assertSame(404, $this->call('POST', "/api/session/$run/release", [])['status']);
+        $this->assertSame(404, $this->call('POST', "/api/session/$run/deferred/authorize", ['claims' => []])['status']);
+    }
 }

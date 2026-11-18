@@ -80,6 +80,9 @@ export const api = {
   issueMultiple(bundle: string, data: Record<string, Record<string, string>>) {
     return request<IssueMultipleResponse>('POST', '/issue-multiple', { bundle, data });
   },
+  issuePresentation(presentation: string) {
+    return request<IssueResponse>('POST', '/issue-presentation', { presentation });
+  },
   release(run: string) {
     return request<ReleaseResponse>('POST', `/session/${run}/release`, {});
   },

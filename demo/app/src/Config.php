@@ -10,7 +10,7 @@ final class Config
 {
     /**
      * @param array<string,string> $env
-     * @param array{issuers:array<string,array>,credentials:array<string,array>} $catalog
+     * @param array{issuers:array<string,array>,credentials:array<string,array>,bundles?:array<string,array>,presentations?:array<string,array>} $catalog
      */
     public function __construct(private array $env, private array $catalog)
     {
@@ -93,6 +93,35 @@ final class Config
         return $bundle;
     }
 
+    /**
+     * A presentation during issuance: the DCQL query that the wallet answers and the credential that is issued afterwards.
+     * @return array<string,mixed>
+     */
+    public function presentation(string $key): array
+    {
+        $presentation = $this->catalog['presentations'][$key] ?? null;
+        if ($presentation === null) {
+            throw new ApiException(422, 'unknown_presentation', 'Unknown presentation');
+        }
+        $presentation['key'] = $key;
+        return $presentation;
+    }
+
+    /**
+     * @param array<string,mixed> $dcql
+     * @return list<string>
+     */
+    private static function requestedClaims(array $dcql): array
+    {
+        $names = [];
+        foreach ($dcql['credentials'] ?? [] as $query) {
+            foreach ($query['claims'] ?? [] as $claim) {
+                $names[] = implode('.', array_map('strval', $claim['path'] ?? []));
+            }
+        }
+        return $names;
+    }
+
     /** The part of the catalog that is safe to show the front-end: no tokens, no upstream URLs. */
     public function publicCatalog(): array
     {
@@ -117,6 +146,20 @@ final class Config
         foreach ($this->catalog['bundles'] ?? [] as $key => $bundle) {
             $bundles[$key] = ['title' => $bundle['title'], 'issuer' => $bundle['issuer'], 'credentials' => $bundle['credentials']];
         }
-        return ['environment' => 'dev', 'issuers' => $issuers, 'credentials' => $credentials, 'bundles' => $bundles];
+        $presentations = [];
+        foreach ($this->catalog['presentations'] ?? [] as $key => $presentation) {
+            $presentations[$key] = [
+                'title' => $presentation['title'],
+                'issuer' => $presentation['issuer'],
+                'prerequisite' => $presentation['prerequisite'] ?? null,
+                'mapping' => $presentation['mapping'],
+                // the claims the wallet is asked for (not the query itself: it holds issuer URLs)
+                'requested' => self::requestedClaims($presentation['dcql']),
+            ];
+        }
+        return [
+            'environment' => 'dev', 'issuers' => $issuers, 'credentials' => $credentials,
+            'bundles' => $bundles, 'presentations' => $presentations,
+        ];
     }
 }

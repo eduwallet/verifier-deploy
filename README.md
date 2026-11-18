@@ -47,7 +47,7 @@ The application can now be accessed at `http://localhost:8080`
 
 ## Demo
 
-The Demo application (`demo/`) demonstrates complete credential flows against the live development issuers. It has a PHP back-end (`demo/app`) that holds the API tokens and talks to the issuer, and a Vue 3 + PrimeVue front-end (`demo/frontend`) that only talks to the back-end. See `demo/PLAN.md` for the design and the planned flows.
+The Demo application (`demo/`) demonstrates complete credential flows against the live development issuers. It has a PHP back-end (`demo/app`) that holds the API tokens and talks to the issuer, and a Vue 3 + PrimeVue front-end (`demo/frontend`) that only talks to the back-end. See `demo/PLAN.md` for the design and the planned flows. The flows are: deferred credential, multiple credentials, and presentation during issuance (an eduID is presented, optionally issued first, and a Generic Credential is issued from it). The last one needs the embedded authorization server of the sandbox issuer, see the `agents-conf` `development` branch.
 
 ### Back-end
 

@@ -2,7 +2,7 @@
 
 /** Normalised phase of an offer; the raw issuer status is available as `status` */
 export type Phase =
-  | 'created' | 'retrieved' | 'token' | 'processing' | 'pending'
+  | 'created' | 'retrieved' | 'presentation' | 'verified' | 'token' | 'processing' | 'pending'
   | 'ready' | 'denied' | 'issued' | 'expired' | 'error';
 
 export interface TraceEntry {
@@ -44,12 +44,25 @@ export interface CatalogBundle {
   credentials: string[];
 }
 
+/** Issuance during which the wallet first presents credentials */
+export interface CatalogPresentation {
+  title: string;
+  issuer: string;
+  /** the catalog key of the credential that can be issued first, if the wallet has none */
+  prerequisite: string | null;
+  /** credential claim -> claim of the presented credential that fills it */
+  mapping: Record<string, string>;
+  /** the claims the wallet is asked to disclose */
+  requested: string[];
+}
+
 export interface Catalog {
   csrfToken: string;
   environment: string;
   issuers: Record<string, { name: string; configured: boolean }>;
   credentials: Record<string, CatalogCredential>;
   bundles: Record<string, CatalogBundle>;
+  presentations?: Record<string, CatalogPresentation>;
 }
 
 export interface IssueResponse extends Traced {

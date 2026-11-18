@@ -46,6 +46,8 @@ export function pollDelayMs(phase: Phase | null): number | null {
 export const PHASE_LABELS: Record<Phase, string> = {
   created: 'Offer created',
   retrieved: 'Offer retrieved by wallet',
+  presentation: 'Presentation requested',
+  verified: 'Presentation verified',
   token: 'Access token issued',
   processing: 'Processing',
   pending: 'Pending back-office',
@@ -65,7 +67,9 @@ export function phaseSeverity(phase: Phase | null): Severity {
     case 'error': return 'danger';
     case 'expired': return 'warn';
     case 'pending':
-    case 'ready': return 'info';
+    case 'ready':
+    case 'presentation': return 'info';
+    case 'verified': return 'success';
     default: return 'secondary';
   }
 }
@@ -74,6 +78,9 @@ export function phaseSeverity(phase: Phase | null): Severity {
 export const STATUS_EVENTS: Record<string, string> = {
   OFFER_CREATED: 'Offer created at the issuer',
   OFFER_URI_RETRIEVED: 'Wallet retrieved the credential offer',
+  PRESENTATION_REQUESTED: 'Wallet asked the issuer for authorization, the issuer requested a presentation',
+  PRESENTATION_VERIFIED: 'The verifier accepted the presentation, the issuer gave the wallet an authorization code',
+  AUTHORIZATION_DENIED: 'The presentation was rejected, the issuer denied the authorization',
   ACCESS_TOKEN_CREATED: 'Wallet received an access token',
   CREDENTIAL_PENDING: 'Wallet requested the credential, the issuer answered 202 (deferred)',
   CREDENTIAL_READY: 'Back-office released the credential, waiting for the wallet to collect it',

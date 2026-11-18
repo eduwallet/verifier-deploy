@@ -34,6 +34,18 @@ import Card from 'primevue/card';
           <router-link to="/multiple"><Button label="Start" icon="pi pi-arrow-right" icon-pos="right" as="span" /></router-link>
         </template>
       </Card>
+      <Card>
+        <template #title>Presentation during issuance</template>
+        <template #content>
+          <p>
+            Receive a credential after presenting an eduID. First issue an eduID if your wallet has none, then
+            the issuer asks your wallet for it and fills the new credential with the presented name and e-mail address.
+          </p>
+        </template>
+        <template #footer>
+          <router-link to="/presentation"><Button label="Start" icon="pi pi-arrow-right" icon-pos="right" as="span" /></router-link>
+        </template>
+      </Card>
     </div>
   </div>
 </template>
