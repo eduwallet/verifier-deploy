@@ -293,7 +293,7 @@ $pid = [
 ];
 
 $eduid = [
-    "name" => "eduID",
+    "name" => "eduID (auth-flow)",
     "short" => "eduid",
     "credentialId" => "eduID",
     "presentation" => "eduID",
@@ -301,7 +301,7 @@ $eduid = [
     "data" => []
 ];
 $eduidpa = [
-    "name" => "eduID",
+    "name" => "eduID (pre-auth)",
     "short" => "eduid",
     "credentialId" => "eduID",
     "presentation" => "eduID",
@@ -339,7 +339,7 @@ $proeftuin = [
         "short" => "mbob",
         "type" => "issuer",
         "tool" => "agent",
-        "credentials" => [$aec, $sc, $scc, $sdc, $eec, $obc]
+        "credentials" => [$aec, $sc, $scc, $sdc, $eec, $obc, $icc]
     ],
     "mbobauth" => [
         "name" => "MBO Beek (auth flow)",
@@ -353,7 +353,7 @@ $proeftuin = [
         "short" => "uvh",
         "type" => "issuer",
         "tool" => "agent",
-        "credentials" => [$aec, $sc, $scc, $sdc, $eec, $obc]
+        "credentials" => [$aec, $sc, $scc, $sdc, $eec, $obc, $icc]
     ],
     "uvhauth" => [
         "name" => "Universiteit van Harderwijk (auth flow)",
@@ -367,7 +367,7 @@ $proeftuin = [
         "short" => "hbot",
         "type" => "issuer",
         "tool" => "agent",
-        "credentials" => [$aec, $sc, $scc, $sdc, $eec, $obc]
+        "credentials" => [$aec, $sc, $scc, $sdc, $eec, $obc, $icc]
     ],
     "hbotauth" => [
         "name" => "HBO Texel (auth flow)",
@@ -388,7 +388,7 @@ $proeftuin = [
         "short" => "epi",
         "type" => "issuer",
         "tool" => "agent",
-        "credentials" => [$eduidpa]
+        "credentials" => [$eduid, $eduidpa]
     ],
     "nlgov" => [
         "name" => "NL Government",
